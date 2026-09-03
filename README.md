@@ -37,4 +37,12 @@ ENABLE_DEMO_SEED=true npm run seed:demo
 
 Rerunning the command replaces only predictions marked `source: "DEMO_SEED"` and updates only reserved users marked `isDemo: true`. It never deletes or rewrites `LIVE` predictions. Demo history contains no transaction hashes, order IDs, explorer links, or claims of on-chain execution; real wallet predictions use `source: "LIVE"` and retain their verified transaction hash.
 
+After seeding, prepare David's active locked card against a currently live DreamDEX market:
+
+```bash
+ENABLE_DEMO_SEED=true npm run demo:prepare-locked
+```
+
+This command discovers the market through the verified adapter and stores no fake transaction hash. Rerun it when rotating Event Contracts expire.
+
 Product, integration, demo, deployment, and MVP limitation documentation will be completed in their mandatory phases.

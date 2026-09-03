@@ -9,6 +9,7 @@ import { somniaShannon } from "@somnia-chain/markets-sdk/chains";
 
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { useProfile } from "@/hooks/use-profile";
 import { marketKeys } from "@/hooks/use-markets";
 import { myPredictionsKey } from "@/hooks/use-predictions";
 import { dreamDex } from "@/lib/dreamdex/adapter";
@@ -30,6 +31,7 @@ export function PredictionComposer({ market, onClose }: { market: DreamDexMarket
   const [confidence, setConfidence] = useState(65);
   const [stake, setStake] = useState(String(market.minimumQuantity ?? ""));
   const [reasoning, setReasoning] = useState("");
+  const [visibility, setVisibility] = useState<"PUBLIC" | "LOCKED">("PUBLIC");
   const [stage, setStage] = useState<Stage>("IDLE");
   const [error, setError] = useState<string | null>(null);
   const [transactionHash, setTransactionHash] = useState<string | null>(null);
@@ -38,6 +40,7 @@ export function PredictionComposer({ market, onClose }: { market: DreamDexMarket
   const { data: walletClient } = useWalletClient();
   const { switchChain } = useSwitchChain();
   const auth = useAuth();
+  const creatorProfile = useProfile(auth.data?.walletAddress ?? "");
   const queryClient = useQueryClient();
   const busy = stage !== "IDLE" && stage !== "SUCCESS";
   const probability = direction === "UP" ? market.probabilities?.yes : market.probabilities?.no;
@@ -74,7 +77,7 @@ export function PredictionComposer({ market, onClose }: { market: DreamDexMarket
         confidence,
         stakeAmount: stake,
         ...(reasoning.trim() ? { reasoning: reasoning.trim() } : {}),
-        visibility: "PUBLIC",
+        visibility,
         marketProbabilityAtEntry: probability,
         transactionHash: trade.transactionHash,
       });
@@ -103,7 +106,8 @@ export function PredictionComposer({ market, onClose }: { market: DreamDexMarket
             <label className="block text-xs font-semibold text-neutral-400">Confidence <span className="float-right text-lime-300">{confidence}%</span><input className="mt-3 w-full accent-lime-300" type="range" min="50" max="99" value={confidence} onChange={(event) => setConfidence(Number(event.target.value))} /></label>
             <label className="block text-xs font-semibold text-neutral-400">Stake ({market.collateralSymbol})<input className="mt-2 h-11 w-full rounded-xl border border-white/10 bg-black/20 px-3 text-sm text-white outline-none focus:border-lime-300/50" inputMode="decimal" value={stake} onChange={(event) => setStake(event.target.value)} /></label>
             <label className="block text-xs font-semibold text-neutral-400">Reasoning <span className="text-neutral-600">— optional</span><textarea className="mt-2 min-h-24 w-full resize-none rounded-xl border border-white/10 bg-black/20 p-3 text-sm text-white outline-none focus:border-lime-300/50" maxLength={2000} value={reasoning} onChange={(event) => setReasoning(event.target.value)} placeholder="What does the market appear to be missing?" /></label>
-            <div className="rounded-xl border border-white/8 bg-white/[.025] p-3 text-xs"><div className="flex justify-between"><span className="text-neutral-500">Visibility</span><span>Public</span></div><div className="mt-2 flex justify-between"><span className="text-neutral-500">Probability snapshot</span><span>{probability == null ? "Unavailable" : `${Math.round(probability * 1000) / 10}% ${direction}`}</span></div></div>
+            <fieldset><legend className="text-xs font-semibold text-neutral-400">Visibility</legend><div className="mt-2 grid grid-cols-2 gap-2"><button type="button" onClick={() => setVisibility("PUBLIC")} className={`rounded-xl border p-3 text-sm ${visibility === "PUBLIC" ? "border-lime-300/40 bg-lime-300/10 text-lime-300" : "border-white/9 text-neutral-400"}`}>Public</button><button type="button" disabled={!creatorProfile.data?.verified} onClick={() => setVisibility("LOCKED")} className={`rounded-xl border p-3 text-sm disabled:cursor-not-allowed disabled:opacity-35 ${visibility === "LOCKED" ? "border-lime-300/40 bg-lime-300/10 text-lime-300" : "border-white/9 text-neutral-400"}`}>Locked</button></div>{!creatorProfile.data?.verified ? <p className="mt-2 text-[11px] text-neutral-600">Locked insights require reputation 80+ and 25 resolved predictions.</p> : null}</fieldset>
+            <div className="rounded-xl border border-white/8 bg-white/[.025] p-3 text-xs"><div className="flex justify-between"><span className="text-neutral-500">Probability snapshot</span><span>{probability == null ? "Unavailable" : `${Math.round(probability * 1000) / 10}% ${direction}`}</span></div></div>
             {error ? <p className="rounded-xl border border-red-400/15 bg-red-400/5 p-3 text-sm text-red-300">{error}</p> : null}
             {busy ? <div className="flex items-center justify-center gap-2 py-2 text-sm text-neutral-300"><LoaderCircle className="size-4 animate-spin text-lime-300" />{stageLabel[stage as Exclude<Stage, "IDLE" | "SUCCESS">]}</div> : null}
             {chainId !== somniaShannon.id && address ? <Button className="w-full" onClick={() => switchChain({ chainId: somniaShannon.id })}>Switch to Somnia Shannon</Button> : <Button className="w-full" onClick={() => void publish()} disabled={busy}>Publish & Trade</Button>}

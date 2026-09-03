@@ -12,6 +12,7 @@
     "build": "npm run build --workspace @credence/shared && npm run build --workspace @credence/api && npm run build --workspace @credence/web",
     "lint": "npm run lint --workspaces --if-present",
     "seed:demo": "npm run seed:demo --workspace @credence/api",
+    "demo:prepare-locked": "npm run demo:prepare-locked --workspace @credence/api",
     "test": "npm run test --workspaces --if-present",
     "typecheck": "npm run build --workspace @credence/shared && npm run typecheck --workspace @credence/api && npm run typecheck --workspace @credence/web"
   },

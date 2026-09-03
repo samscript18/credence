@@ -8,7 +8,7 @@ export type CreatePredictionInput = {
   confidence: number;
   stakeAmount: string;
   reasoning?: string;
-  visibility: "PUBLIC";
+  visibility: "PUBLIC" | "LOCKED";
   marketProbabilityAtEntry: number;
   transactionHash: string;
 };

@@ -30,8 +30,8 @@ export class CreatePredictionDto {
   @MaxLength(2000)
   reasoning?: string;
 
-  @IsEnum(["PUBLIC"] as const, { message: "only PUBLIC predictions are available in this phase" })
-  visibility!: "PUBLIC";
+  @IsEnum(["PUBLIC", "LOCKED"] as const)
+  visibility!: "PUBLIC" | "LOCKED";
 
   @IsNumber()
   @Min(0)

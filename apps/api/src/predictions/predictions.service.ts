@@ -5,7 +5,7 @@ import type { Model } from "mongoose";
 
 import { DreamDexService } from "../dreamdex/dreamdex.service.js";
 import { LeaderboardService } from "../leaderboard/leaderboard.service.js";
-import { User } from "../users/schemas/user.schema.js";
+import { isVerifiedPredictor, User } from "../users/schemas/user.schema.js";
 import { PredictionUnlock } from "../unlocks/schemas/prediction-unlock.schema.js";
 import { CreatePredictionDto } from "./dto/create-prediction.dto.js";
 import {
@@ -32,6 +32,20 @@ export class PredictionsService {
     if (!market.tradable || new Date(market.expiryAt).getTime() <= Date.now()) {
       throw new BadRequestException({ message: "DreamDEX market is no longer tradable", code: "MARKET_EXPIRED" });
     }
+    const user = await this.userModel
+      .findOneAndUpdate(
+        { walletAddress: canonicalAddress },
+        { $setOnInsert: { walletAddress: canonicalAddress } },
+        { upsert: true, returnDocument: "after", setDefaultsOnInsert: true },
+      )
+      .orFail()
+      .exec();
+    if (input.visibility === "LOCKED" && !isVerifiedPredictor(user)) {
+      throw new BadRequestException({
+        message: "Only Verified Predictors can publish locked predictions",
+        code: "VERIFIED_PREDICTOR_REQUIRED",
+      });
+    }
 
     let proof: { orderId: string; filledQuantity: string };
     try {
@@ -48,14 +62,6 @@ export class PredictionsService {
       });
     }
 
-    const user = await this.userModel
-      .findOneAndUpdate(
-        { walletAddress: canonicalAddress },
-        { $setOnInsert: { walletAddress: canonicalAddress } },
-        { upsert: true, new: true, setDefaultsOnInsert: true },
-      )
-      .orFail()
-      .exec();
     try {
       return await this.predictionModel.create({
         predictor: user._id,
@@ -71,7 +77,7 @@ export class PredictionsService {
         direction: input.direction,
         confidence: input.confidence,
         reasoning: input.reasoning?.trim() || undefined,
-        visibility: "PUBLIC",
+        visibility: input.visibility,
         marketProbabilityAtEntry: input.marketProbabilityAtEntry,
         stakeAmount: input.stakeAmount,
         collateralSymbol: market.collateralSymbol,

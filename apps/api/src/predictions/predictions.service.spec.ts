@@ -76,9 +76,14 @@ describe("PredictionsService", () => {
       getEventMarket: vi.fn(() => Promise.resolve(market)),
       verifyPredictionTrade: vi.fn(() => Promise.reject(new Error("not a fill"))),
     };
+    const userModel = {
+      findOneAndUpdate: vi.fn(() => ({
+        orFail: () => ({ exec: () => Promise.resolve({ _id: "user-id" }) }),
+      })),
+    };
     const service = new PredictionsService(
       { create } as unknown as Model<Prediction>,
-      {} as Model<User>,
+      userModel as unknown as Model<User>,
       {} as Model<PredictionUnlock>,
       dreamDex as unknown as DreamDexService,
       {} as LeaderboardService,
@@ -125,5 +130,27 @@ describe("PredictionsService", () => {
     expect(result).not.toHaveProperty("confidence");
     expect(result).not.toHaveProperty("reasoning");
     expect(result).not.toHaveProperty("marketProbabilityAtEntry");
+  });
+
+  it("rejects locked visibility for a non-Verified predictor before chain verification", async () => {
+    const dreamDex = {
+      getEventMarket: vi.fn(() => Promise.resolve(market)),
+      verifyPredictionTrade: vi.fn(),
+    };
+    const userModel = {
+      findOneAndUpdate: vi.fn(() => ({
+        orFail: () => ({ exec: () => Promise.resolve({ _id: "user-id", reputationScore: 79, resolvedPredictions: 100 }) }),
+      })),
+    };
+    const service = new PredictionsService(
+      {} as Model<Prediction>,
+      userModel as unknown as Model<User>,
+      {} as Model<PredictionUnlock>,
+      dreamDex as unknown as DreamDexService,
+      {} as LeaderboardService,
+    );
+
+    await expect(service.create("0xABC", { ...input, visibility: "LOCKED" })).rejects.toBeInstanceOf(BadRequestException);
+    expect(dreamDex.verifyPredictionTrade).not.toHaveBeenCalled();
   });
 });
