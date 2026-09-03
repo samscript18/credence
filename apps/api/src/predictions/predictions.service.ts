@@ -4,6 +4,7 @@ import { InjectModel } from "@nestjs/mongoose";
 import type { Model } from "mongoose";
 
 import { DreamDexService } from "../dreamdex/dreamdex.service.js";
+import { LeaderboardService } from "../leaderboard/leaderboard.service.js";
 import { User } from "../users/schemas/user.schema.js";
 import { PredictionUnlock } from "../unlocks/schemas/prediction-unlock.schema.js";
 import { CreatePredictionDto } from "./dto/create-prediction.dto.js";
@@ -22,6 +23,7 @@ export class PredictionsService {
     @InjectModel(PredictionUnlock.name)
     private readonly unlockModel: Model<PredictionUnlock>,
     private readonly dreamDex: DreamDexService,
+    private readonly leaderboard: LeaderboardService,
   ) {}
 
   async create(walletAddress: string, input: CreatePredictionDto): Promise<PredictionDocument> {
@@ -136,8 +138,12 @@ export class PredictionsService {
     if (predictions.length === 0) return [];
     const addresses = [...new Set(predictions.map((prediction) => prediction.predictorAddress))];
     const users = await this.userModel.find({ walletAddress: { $in: addresses } }).exec();
+    const ranks = await this.leaderboard.ranks(addresses);
     const summaries = new Map<string, PredictorSummary>(
-      users.map((user) => [user.walletAddress, toPredictorSummary(user)]),
+      users.map((user) => [
+        user.walletAddress,
+        { ...toPredictorSummary(user), rank: ranks.get(user.walletAddress) },
+      ]),
     );
     const viewer = viewerAddress?.toLowerCase();
     const unlocked = new Set<string>();

@@ -4,6 +4,7 @@ import { InjectModel } from "@nestjs/mongoose";
 import type { Model } from "mongoose";
 
 import { PredictionsService } from "../predictions/predictions.service.js";
+import { LeaderboardService } from "../leaderboard/leaderboard.service.js";
 import { toPredictorSummary } from "../predictions/prediction.dto.js";
 import { User } from "./schemas/user.schema.js";
 
@@ -12,6 +13,7 @@ export class UsersService {
   constructor(
     @InjectModel(User.name) private readonly userModel: Model<User>,
     private readonly predictions: PredictionsService,
+    private readonly leaderboard: LeaderboardService,
   ) {}
 
   async getProfile(address: string, viewerAddress?: string): Promise<PredictorProfile> {
@@ -19,11 +21,13 @@ export class UsersService {
     const user = await this.userModel.findOne({ walletAddress }).exec();
     if (!user) throw new NotFoundException("Predictor was not found");
     const predictions = await this.predictions.getForProfile(walletAddress, viewerAddress);
+    const rank = (await this.leaderboard.ranks([walletAddress])).get(walletAddress);
     const resolvedHistory = predictions.resolved.filter(
       (prediction): prediction is VisiblePrediction => !prediction.locked,
     );
     return {
       ...toPredictorSummary(user),
+      ...(rank ? { rank } : {}),
       correctPredictions: user.correctPredictions,
       incorrectPredictions: user.incorrectPredictions,
       realizedPnl: user.realizedPnl,

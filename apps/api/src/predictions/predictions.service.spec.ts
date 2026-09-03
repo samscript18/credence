@@ -3,6 +3,7 @@ import { BadRequestException } from "@nestjs/common";
 import { describe, expect, it, vi } from "vitest";
 
 import type { DreamDexService } from "../dreamdex/dreamdex.service.js";
+import type { LeaderboardService } from "../leaderboard/leaderboard.service.js";
 import type { User } from "../users/schemas/user.schema.js";
 import type { PredictionUnlock } from "../unlocks/schemas/prediction-unlock.schema.js";
 import type { CreatePredictionDto } from "./dto/create-prediction.dto.js";
@@ -51,6 +52,7 @@ describe("PredictionsService", () => {
       userModel as unknown as Model<User>,
       {} as Model<PredictionUnlock>,
       dreamDex as unknown as DreamDexService,
+      {} as LeaderboardService,
     );
 
     await service.create("0xABC", input);
@@ -79,6 +81,7 @@ describe("PredictionsService", () => {
       {} as Model<User>,
       {} as Model<PredictionUnlock>,
       dreamDex as unknown as DreamDexService,
+      {} as LeaderboardService,
     );
 
     await expect(service.create("0xABC", input)).rejects.toBeInstanceOf(BadRequestException);
@@ -112,6 +115,7 @@ describe("PredictionsService", () => {
       userModel as unknown as Model<User>,
       {} as Model<PredictionUnlock>,
       {} as DreamDexService,
+      { ranks: () => Promise.resolve(new Map()) } as unknown as LeaderboardService,
     );
 
     const [result] = await service.getFeed();

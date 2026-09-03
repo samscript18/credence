@@ -122,3 +122,10 @@ export type PredictorProfile = PredictorSummary & {
   activePredictions: PredictionFeedItem[];
   resolvedHistory: VisiblePrediction[];
 };
+
+export type LeaderboardEntry = PredictorSummary & {
+  rank: number;
+  correctPredictions: number;
+  incorrectPredictions: number;
+  realizedPnl: string;
+};
