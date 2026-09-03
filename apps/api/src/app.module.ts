@@ -5,6 +5,7 @@ import { MongooseModule } from "@nestjs/mongoose";
 import { AppController } from "./app.controller.js";
 import { AuthModule } from "./auth/auth.module.js";
 import { validateEnvironment } from "./config/environment.js";
+import { DreamDexModule } from "./dreamdex/dreamdex.module.js";
 import { BackedPrediction, BackedPredictionSchema } from "./backs/schemas/backed-prediction.schema.js";
 import { Prediction, PredictionSchema } from "./predictions/schemas/prediction.schema.js";
 import { PredictionUnlock, PredictionUnlockSchema } from "./unlocks/schemas/prediction-unlock.schema.js";
@@ -26,6 +27,7 @@ import { User, UserSchema } from "./users/schemas/user.schema.js";
       { name: BackedPrediction.name, schema: BackedPredictionSchema },
     ]),
     AuthModule,
+    DreamDexModule,
   ],
   controllers: [AppController],
 })

@@ -1,11 +1,6 @@
 "use client";
 
-import {
-  isBinaryMarket,
-  type MarketOnchain,
-  type PlaceOrderResult,
-  type UnifiedMarket,
-} from "@somnia-chain/markets-sdk";
+import type { DreamDexMarket } from "@credence/shared";
 import { somniaShannon } from "@somnia-chain/markets-sdk/chains";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
@@ -16,9 +11,7 @@ import {
   useWalletClient,
 } from "wagmi";
 
-import { getDreamDexExchange } from "@/lib/dreamdex/client";
-
-type Book = Awaited<ReturnType<ReturnType<typeof getDreamDexExchange>["fetchOrderBook"]>>;
+import { dreamDex, type DreamDexMarketInspection } from "@/lib/dreamdex/adapter";
 
 type TxEvidence = {
   action: "faucet" | "trade";
@@ -33,29 +26,6 @@ type TxEvidence = {
 const json = (value: unknown) =>
   JSON.stringify(value, (_key, item: unknown) => typeof item === "bigint" ? item.toString() : item, 2);
 
-function marketSummary(market: UnifiedMarket) {
-  if (!isBinaryMarket(market.info)) return null;
-  return {
-    id: market.id,
-    symbol: market.symbol,
-    active: market.active,
-    outcomes: market.outcomes,
-    marketId: market.info.marketId,
-    poolAddress: market.info.poolAddress,
-    asset: market.info.asset,
-    intervalSec: market.info.intervalSec,
-    tradingStart: market.info.tradingStart,
-    expiry: market.info.expiry,
-    indexedStatus: market.info.status,
-    venueId: market.info.venueId,
-    collateral: market.info.collateral,
-    baseDecimals: market.info.baseDecimals,
-    quoteDecimals: market.info.quoteDecimals,
-    limits: market.limits,
-    precision: market.precision,
-  };
-}
-
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
 }
@@ -66,17 +36,16 @@ export function DreamDexProof() {
   const { disconnect } = useDisconnect();
   const { switchChain, isPending: isSwitching } = useSwitchChain();
   const { data: walletClient } = useWalletClient();
-  const [markets, setMarkets] = useState<UnifiedMarket[]>([]);
+  const [markets, setMarkets] = useState<DreamDexMarket[]>([]);
   const [selectedId, setSelectedId] = useState("");
-  const [book, setBook] = useState<Book | null>(null);
-  const [onchain, setOnchain] = useState<MarketOnchain | null>(null);
+  const [inspection, setInspection] = useState<DreamDexMarketInspection | null>(null);
   const [loading, setLoading] = useState(false);
   const [action, setAction] = useState<"faucet" | "trade" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [evidence, setEvidence] = useState<TxEvidence | null>(null);
 
   const selected = useMemo(
-    () => markets.find((market) => market.id === selectedId) ?? null,
+    () => markets.find((market) => market.marketId === selectedId) ?? null,
     [markets, selectedId],
   );
   const rightChain = chainId === somniaShannon.id;
@@ -85,15 +54,9 @@ export function DreamDexProof() {
     setLoading(true);
     setError(null);
     try {
-      const loaded = Object.values(await getDreamDexExchange().loadMarkets(true))
-        .filter((market) => market.active && isBinaryMarket(market.info))
-        .sort((a, b) => {
-          const aExpiry = isBinaryMarket(a.info) ? Number(a.info.expiry) : 0;
-          const bExpiry = isBinaryMarket(b.info) ? Number(b.info.expiry) : 0;
-          return bExpiry - aExpiry;
-        });
+      const loaded = await dreamDex.listEventMarkets();
       setMarkets(loaded);
-      setSelectedId((current) => loaded.some((market) => market.id === current) ? current : (loaded[0]?.id ?? ""));
+      setSelectedId((current) => loaded.some((market) => market.marketId === current) ? current : (loaded[0]?.marketId ?? ""));
     } catch (loadError) {
       setError(errorMessage(loadError));
     } finally {
@@ -101,24 +64,12 @@ export function DreamDexProof() {
     }
   }, []);
 
-  const inspectMarket = useCallback(async (market: UnifiedMarket | null) => {
-    setBook(null);
-    setOnchain(null);
+  const inspectMarket = useCallback(async (market: DreamDexMarket | null) => {
+    setInspection(null);
     setError(null);
-    if (!market || !isBinaryMarket(market.info)) return;
-    const yesSymbol = market.outcomes?.[0]?.symbol;
-    if (!yesSymbol) {
-      setError("The selected binary market has no UP/YES outcome symbol.");
-      return;
-    }
+    if (!market) return;
     try {
-      const exchange = getDreamDexExchange();
-      const [nextBook, nextOnchain] = await Promise.all([
-        exchange.fetchOrderBook(yesSymbol, 5),
-        exchange.client.getMarketOnchain(market.info.marketId),
-      ]);
-      setBook(nextBook);
-      setOnchain(nextOnchain);
+      setInspection(await dreamDex.inspectEventMarket(market.marketId));
     } catch (inspectError) {
       setError(errorMessage(inspectError));
     }
@@ -131,9 +82,7 @@ export function DreamDexProof() {
     queueMicrotask(() => void inspectMarket(selected));
   }, [inspectMarket, selected]);
   useEffect(() => {
-    const exchange = getDreamDexExchange();
-    if (walletClient && rightChain) exchange.setSigner({ walletClient });
-    else exchange.setSigner({});
+    if (!walletClient || !rightChain) dreamDex.clearSigner();
   }, [rightChain, walletClient]);
 
   async function requestFaucet(): Promise<void> {
@@ -142,11 +91,8 @@ export function DreamDexProof() {
     setError(null);
     setEvidence(null);
     try {
-      const exchange = getDreamDexExchange();
-      exchange.setSigner({ walletClient });
-      const result = await exchange.trader.faucet({ amount: 10n * 10n ** 6n });
-      if (result.receipt.status !== "success") throw new Error(`Faucet transaction ${result.receipt.status}`);
-      setEvidence({ action: "faucet", hash: result.hash, status: result.receipt.status });
+      const result = await dreamDex.requestTestCollateral(walletClient);
+      setEvidence({ action: "faucet", hash: result.hash, status: result.status });
     } catch (faucetError) {
       setError(errorMessage(faucetError));
     } finally {
@@ -155,51 +101,28 @@ export function DreamDexProof() {
   }
 
   async function executeSmallestTrade(): Promise<void> {
-    if (!walletClient || !address || !rightChain || !selected || !isBinaryMarket(selected.info)) return;
+    if (!walletClient || !address || !rightChain || !selected) return;
     setAction("trade");
     setError(null);
     setEvidence(null);
     try {
-      const exchange = getDreamDexExchange();
-      exchange.setSigner({ walletClient });
-
-      // Refresh immediately before the write. The indexer is for discovery;
-      // this on-chain status is the authoritative trade gate.
-      const refreshed = Object.values(await exchange.loadMarkets(true)).find((market) => market.id === selected.id);
-      if (!refreshed || !isBinaryMarket(refreshed.info) || !refreshed.active) {
-        throw new Error("Market is no longer active. Refresh and choose its successor.");
-      }
-      const current = await exchange.client.getMarketOnchain(refreshed.info.marketId);
-      if (current.status !== 1) throw new Error(`Market is not Trading (on-chain status ${current.status}).`);
-      if (Number(current.expiry) <= Date.now() / 1000 + 15) throw new Error("Market is too close to expiry for a safe proof trade.");
-
-      const yesSymbol = refreshed.outcomes?.[0]?.symbol;
-      if (!yesSymbol) throw new Error("UP/YES outcome is unavailable.");
-      const currentBook = await exchange.fetchOrderBook(yesSymbol, 5);
-      const bestAsk = currentBook.asks[0]?.[0];
-      if (bestAsk === undefined) throw new Error("No resting UP/YES ask is available; choose another market.");
-
-      const minimum = refreshed.limits.amount?.min;
-      if (minimum === undefined || minimum <= 0) throw new Error("SDK did not expose a valid venue minimum quantity.");
-      const price = Math.min(0.999, bestAsk + 0.02);
-      const order = await exchange.createOrder(yesSymbol, "limit", "buy", minimum, price, { timeInForce: "IOC" });
-      const result = order.info as PlaceOrderResult;
-      if (result.receipt.status !== "success") throw new Error(`Trade transaction ${result.receipt.status}`);
-
-      const [yesBalance, noBalance] = await Promise.all([
-        exchange.client.getOutcomeBalance({ outcomeToken: current.outcomeToken, account: address, id: current.yesId }),
-        exchange.client.getOutcomeBalance({ outcomeToken: current.outcomeToken, account: address, id: current.noId }),
-      ]);
+      const result = await dreamDex.prepareOrExecutePredictionTrade({
+        marketId: selected.marketId,
+        direction: "UP",
+        walletClient,
+        account: address,
+      });
+      const { yesBalance, noBalance } = await dreamDex.getUserPosition(selected.marketId, address);
       setEvidence({
         action: "trade",
-        hash: result.hash,
-        status: result.receipt.status,
-        orderId: result.orderId?.toString(),
-        filled: order.filled,
-        yesBalance: yesBalance.toString(),
-        noBalance: noBalance.toString(),
+        hash: result.transactionHash,
+        status: result.status,
+        orderId: result.orderId ?? undefined,
+        filled: result.filledQuantity,
+        yesBalance,
+        noBalance,
       });
-      await inspectMarket(refreshed);
+      await inspectMarket(selected);
     } catch (tradeError) {
       setError(errorMessage(tradeError));
     } finally {
@@ -243,26 +166,26 @@ export function DreamDexProof() {
         </div>
         <label className="mt-3 block" htmlFor="market">Market</label>
         <select id="market" className="mt-2 w-full rounded border border-neutral-700 bg-black p-2" value={selectedId} onChange={(event) => setSelectedId(event.target.value)}>
-          {markets.map((market) => <option key={market.id} value={market.id}>{market.symbol}</option>)}
+          {markets.map((market) => <option key={market.marketId} value={market.marketId}>{market.symbol}</option>)}
         </select>
-        <pre className="mt-3 overflow-auto rounded bg-neutral-950 p-3 text-xs">{selected ? json(marketSummary(selected)) : "No live market loaded."}</pre>
+        <pre className="mt-3 overflow-auto rounded bg-neutral-950 p-3 text-xs">{selected ? json(selected) : "No live market loaded."}</pre>
       </section>
 
       <section className="mt-4 grid gap-4 lg:grid-cols-2">
         <div className="rounded border border-neutral-800 p-4">
           <h2 className="font-semibold">3. Authoritative on-chain snapshot</h2>
-          <pre className="mt-3 overflow-auto rounded bg-neutral-950 p-3 text-xs">{onchain ? json(onchain) : "Select a readable market."}</pre>
+          <pre className="mt-3 overflow-auto rounded bg-neutral-950 p-3 text-xs">{inspection ? json(inspection.onchain) : "Select a readable market."}</pre>
         </div>
         <div className="rounded border border-neutral-800 p-4">
           <h2 className="font-semibold">4. UP/YES book</h2>
-          <pre className="mt-3 overflow-auto rounded bg-neutral-950 p-3 text-xs">{book ? json({ bids: book.bids, asks: book.asks, timestamp: book.timestamp }) : "No book loaded."}</pre>
+          <pre className="mt-3 overflow-auto rounded bg-neutral-950 p-3 text-xs">{inspection ? json({ bids: inspection.orderBook.bids, asks: inspection.orderBook.asks, timestamp: inspection.orderBook.timestamp }) : "No book loaded."}</pre>
         </div>
       </section>
 
       <section className="mt-4 rounded border border-neutral-800 p-4">
         <h2 className="font-semibold">5. Genuine smallest valid IOC trade</h2>
         <p className="mt-2 text-neutral-400">Buys the selected market’s minimum lot at the current UP ask plus a 2% protective limit. The SDK may first request collateral approval.</p>
-        <button className="mt-3 rounded bg-emerald-300 px-3 py-2 text-black disabled:opacity-50" disabled={!walletClient || !rightChain || !selected || !book?.asks[0] || action !== null} onClick={() => void executeSmallestTrade()}>
+        <button className="mt-3 rounded bg-emerald-300 px-3 py-2 text-black disabled:opacity-50" disabled={!walletClient || !rightChain || !selected || !inspection?.orderBook.asks[0] || action !== null} onClick={() => void executeSmallestTrade()}>
           {action === "trade" ? "Waiting for wallet / confirmation…" : "Execute smallest valid testnet trade"}
         </button>
         {error && <p className="mt-3 whitespace-pre-wrap text-red-300">{error}</p>}

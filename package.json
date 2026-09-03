@@ -12,7 +12,7 @@
     "build": "npm run build --workspace @credence/shared && npm run build --workspace @credence/api && npm run build --workspace @credence/web",
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present"
+    "typecheck": "npm run build --workspace @credence/shared && npm run typecheck --workspace @credence/api && npm run typecheck --workspace @credence/web"
   },
   "devDependencies": {
     "concurrently": "latest",
