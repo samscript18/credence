@@ -13,6 +13,7 @@ import { BackedPrediction, BackedPredictionSchema } from "./backs/schemas/backed
 import { Prediction, PredictionSchema } from "./predictions/schemas/prediction.schema.js";
 import { PredictionsModule } from "./predictions/predictions.module.js";
 import { PredictionUnlock, PredictionUnlockSchema } from "./unlocks/schemas/prediction-unlock.schema.js";
+import { UnlocksModule } from "./unlocks/unlocks.module.js";
 import { User, UserSchema } from "./users/schemas/user.schema.js";
 import { UsersModule } from "./users/users.module.js";
 
@@ -38,6 +39,7 @@ import { UsersModule } from "./users/users.module.js";
     UsersModule,
     ReputationModule,
     LeaderboardModule,
+    UnlocksModule,
   ],
   controllers: [AppController],
 })

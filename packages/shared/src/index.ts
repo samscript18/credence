@@ -129,3 +129,19 @@ export type LeaderboardEntry = PredictorSummary & {
   incorrectPredictions: number;
   realizedPnl: string;
 };
+
+export type UnlockInstructions = {
+  predictionId: string;
+  chainId: number;
+  recipient: string;
+  tokenAddress: string;
+  tokenSymbol: string;
+  tokenDecimals: number;
+  amountBaseUnits: string;
+};
+
+export type UnlockConfirmation = {
+  unlocked: true;
+  unlockId: string;
+  transactionHash: string;
+};
