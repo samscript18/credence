@@ -27,7 +27,7 @@ export class PredictionUnlock {
   @Prop({ required: true, lowercase: true, trim: true })
   transactionHash!: string;
 
-  @Prop({ required: true, enum: ["PENDING", "CONFIRMED", "FAILED"] })
+  @Prop({ type: String, required: true, enum: ["PENDING", "CONFIRMED", "FAILED"] })
   status!: UnlockStatus;
 
   @Prop()

@@ -3,6 +3,7 @@
 import { AlertCircle, BarChart3, RefreshCw } from "lucide-react";
 
 import { MarketCard } from "@/components/market-card";
+import { PredictionComposer } from "@/components/prediction-composer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -28,6 +29,8 @@ export function MarketsScreen() {
   const markets = useMarkets();
   const selectedMarketId = useComposerStore((state) => state.selectedMarketId);
   const selectMarket = useComposerStore((state) => state.selectMarket);
+  const clearMarket = useComposerStore((state) => state.clearMarket);
+  const selectedMarket = markets.data?.find((market) => market.marketId === selectedMarketId);
 
   return (
     <div>
@@ -86,14 +89,7 @@ export function MarketsScreen() {
         ) : null}
       </div>
 
-      {selectedMarketId ? (
-        <div className="fixed inset-x-4 bottom-20 z-20 mx-auto max-w-lg rounded-2xl border border-lime-300/20 bg-[#171a13] p-3 shadow-2xl lg:bottom-6 lg:left-auto lg:right-6 lg:mx-0">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0 pl-1"><p className="text-[10px] font-bold uppercase tracking-wider text-lime-300">Prediction draft</p><p className="truncate text-xs text-neutral-400">Market selected and ready for the composer</p></div>
-            <Button disabled title="Prediction composer is introduced in Phase 5">Continue</Button>
-          </div>
-        </div>
-      ) : null}
+      {selectedMarket ? <PredictionComposer market={selectedMarket} onClose={clearMarket} /> : null}
     </div>
   );
 }

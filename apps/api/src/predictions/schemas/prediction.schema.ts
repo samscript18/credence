@@ -16,7 +16,7 @@ export class Prediction {
   @Prop({ required: true, lowercase: true, trim: true })
   predictorAddress!: string;
 
-  @Prop({ required: true, enum: ["LIVE", "DEMO_SEED"] })
+  @Prop({ type: String, required: true, enum: ["LIVE", "DEMO_SEED"] })
   source!: PredictionSource;
 
   @Prop({ required: true, trim: true })
@@ -40,7 +40,7 @@ export class Prediction {
   @Prop({ required: true })
   marketExpiryAt!: Date;
 
-  @Prop({ required: true, enum: ["UP", "DOWN"] })
+  @Prop({ type: String, required: true, enum: ["UP", "DOWN"] })
   direction!: PredictionDirection;
 
   @Prop({ required: true, min: 50, max: 99 })
@@ -49,7 +49,7 @@ export class Prediction {
   @Prop({ trim: true, maxlength: 2000 })
   reasoning?: string;
 
-  @Prop({ required: true, enum: ["PUBLIC", "LOCKED"] })
+  @Prop({ type: String, required: true, enum: ["PUBLIC", "LOCKED"] })
   visibility!: PredictionVisibility;
 
   @Prop({ required: true, min: 0, max: 1 })
@@ -74,13 +74,14 @@ export class Prediction {
   positionReference?: string;
 
   @Prop({
+    type: String,
     required: true,
     enum: ["PENDING_TRADE", "ACTIVE", "RESOLVED", "FAILED"],
     default: "PENDING_TRADE",
   })
   status!: PredictionStatus;
 
-  @Prop({ enum: ["UP", "DOWN", "VOID"] })
+  @Prop({ type: String, enum: ["UP", "DOWN", "VOID"] })
   finalOutcome?: PredictionOutcome;
 
   @Prop()

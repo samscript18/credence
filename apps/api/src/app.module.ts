@@ -9,6 +9,7 @@ import { DreamDexModule } from "./dreamdex/dreamdex.module.js";
 import { MarketsModule } from "./markets/markets.module.js";
 import { BackedPrediction, BackedPredictionSchema } from "./backs/schemas/backed-prediction.schema.js";
 import { Prediction, PredictionSchema } from "./predictions/schemas/prediction.schema.js";
+import { PredictionsModule } from "./predictions/predictions.module.js";
 import { PredictionUnlock, PredictionUnlockSchema } from "./unlocks/schemas/prediction-unlock.schema.js";
 import { User, UserSchema } from "./users/schemas/user.schema.js";
 
@@ -30,6 +31,7 @@ import { User, UserSchema } from "./users/schemas/user.schema.js";
     AuthModule,
     DreamDexModule,
     MarketsModule,
+    PredictionsModule,
   ],
   controllers: [AppController],
 })

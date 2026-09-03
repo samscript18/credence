@@ -12,7 +12,7 @@ export class BackedPrediction {
   @Prop({ required: true, lowercase: true, trim: true })
   backerAddress!: string;
 
-  @Prop({ required: true, enum: ["UP", "DOWN"] })
+  @Prop({ type: String, required: true, enum: ["UP", "DOWN"] })
   direction!: "UP" | "DOWN";
 
   @Prop({ required: true })
@@ -27,7 +27,7 @@ export class BackedPrediction {
   @Prop({ trim: true })
   orderId?: string;
 
-  @Prop({ required: true, enum: ["CONFIRMED", "FAILED"] })
+  @Prop({ type: String, required: true, enum: ["CONFIRMED", "FAILED"] })
   status!: BackStatus;
 
   createdAt!: Date;

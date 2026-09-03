@@ -190,6 +190,9 @@ class DreamDexBrowserAdapter {
     if (result.receipt.status !== "success") {
       throw new Error(`DreamDEX trade transaction ${result.receipt.status}.`);
     }
+    if (order.filled <= 0) {
+      throw new Error("DreamDEX confirmed the order, but it did not fill. Refresh the market and retry.");
+    }
     return {
       transactionHash: result.hash,
       orderId: result.orderId?.toString() ?? null,

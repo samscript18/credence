@@ -56,3 +56,28 @@ export type DreamDexTradeResult = {
 export type DreamDexMarketQuote = DreamDexMarket & {
   probabilities: DreamDexProbabilities | null;
 };
+
+export type CredencePrediction = {
+  id: string;
+  predictorAddress: string;
+  source: "LIVE" | "DEMO_SEED";
+  marketId: string;
+  symbol?: string;
+  underlying?: string;
+  marketTitle: string;
+  marketExpiryAt: string;
+  direction: DreamDexDirection;
+  confidence: number;
+  reasoning?: string;
+  visibility: "PUBLIC" | "LOCKED";
+  marketProbabilityAtEntry: number;
+  stakeAmount: string;
+  collateralSymbol?: string;
+  transactionHash?: string;
+  orderId?: string;
+  status: "PENDING_TRADE" | "ACTIVE" | "RESOLVED" | "FAILED";
+  finalOutcome?: DreamDexDirection | "VOID";
+  isCorrect?: boolean;
+  realizedPnl?: string;
+  createdAt: string;
+};
