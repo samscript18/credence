@@ -52,3 +52,7 @@ export type DreamDexTradeResult = {
   filledQuantity: number;
   status: string;
 };
+
+export type DreamDexMarketQuote = DreamDexMarket & {
+  probabilities: DreamDexProbabilities | null;
+};
