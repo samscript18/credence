@@ -36,6 +36,7 @@ export function toDreamDexMarket(market: UnifiedMarket): DreamDexMarket {
     collateralTokenAddress: market.info.collateral,
     collateralSymbol: market.quote,
     collateralDecimals: market.info.quoteDecimals,
+    baseDecimals: market.info.baseDecimals,
     tradingStartAt: unixSecondsToIso(market.info.tradingStart),
     expiryAt: unixSecondsToIso(market.info.expiry),
     indexedStatus: market.info.status,

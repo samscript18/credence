@@ -28,6 +28,7 @@ describe("DreamDEX domain mapping", () => {
         poolAddress: "0xpool",
         marketAddress: "0xcontract",
         collateral: "0xcollateral",
+        baseDecimals: 6,
         quoteDecimals: 6,
         tradingStart: "100",
         expiry: "200",
@@ -41,6 +42,7 @@ describe("DreamDEX domain mapping", () => {
       underlying: "BTC",
       tradable: true,
       minimumQuantity: 0.001,
+      baseDecimals: 6,
       yesSymbol: "BTC-EVENT/tUSDC#YES",
       noSymbol: "BTC-EVENT/tUSDC#NO",
     });

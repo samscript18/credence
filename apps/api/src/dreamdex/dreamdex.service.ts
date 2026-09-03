@@ -13,7 +13,7 @@ import {
 import { somniaShannon } from "@somnia-chain/markets-sdk/chains";
 import { Injectable, NotFoundException, ServiceUnavailableException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { createPublicClient, http } from "viem";
+import { createPublicClient, formatUnits, http } from "viem";
 
 import { DREAMDEX_INDEXER_URL, DREAMDEX_WS_RPC_URL } from "./dreamdex.constants.js";
 import {
@@ -21,6 +21,31 @@ import {
   toDreamDexProbabilities,
   toDreamDexSettlement,
 } from "./dreamdex.mapper.js";
+
+type VerifiableOrder = {
+  market: string;
+  owner: string;
+  side: string | null | undefined;
+  isBid: boolean;
+  filledQuantity: string;
+};
+
+export function isMatchingFilledPredictionOrder(
+  order: VerifiableOrder,
+  expected: { marketId: string; sender: string; direction: "UP" | "DOWN" },
+): boolean {
+  const expectedSide = expected.direction === "UP" ? "BUY_YES" : "BUY_NO";
+  // DreamDEX's native binary book represents BUY_YES as a bid and BUY_NO as an
+  // ask. `side` carries the user's economic direction; `isBid` must agree with it.
+  const expectedIsBid = expected.direction === "UP";
+  return (
+    order.market.toLowerCase() === expected.marketId.toLowerCase() &&
+    order.owner.toLowerCase() === expected.sender.toLowerCase() &&
+    order.side === expectedSide &&
+    order.isBid === expectedIsBid &&
+    BigInt(order.filledQuantity) > 0n
+  );
+}
 
 @Injectable()
 export class DreamDexService {
@@ -79,7 +104,7 @@ export class DreamDexService {
     marketId: string;
     sender: string;
     direction: "UP" | "DOWN";
-  }): Promise<{ orderId: string; filledQuantity: string }> {
+  }): Promise<{ orderId: string; filledQuantity: string; filledAmount: string }> {
     const market = await this.findMarket(input.marketId);
     const publicClient = createPublicClient({
       chain: somniaShannon,
@@ -100,26 +125,47 @@ export class DreamDexService {
       throw new Error("Transaction does not match the authenticated DreamDEX trade");
     }
 
-    const expectedSide = input.direction === "UP" ? "BUY_YES" : "BUY_NO";
     let matchedOrder:
       | Awaited<ReturnType<SomniaMarkets["client"]["getTransactionActivity"]>>["ordersPlaced"][number]
       | undefined;
     for (let attempt = 0; attempt < 5 && !matchedOrder; attempt += 1) {
       const activity = await this.getExchange().client.getTransactionActivity(input.transactionHash);
       matchedOrder = activity.ordersPlaced.find(
-        (order) =>
-          order.market.toLowerCase() === input.marketId.toLowerCase() &&
-          order.owner.toLowerCase() === sender &&
-          order.isBid &&
-          order.side === expectedSide &&
-          BigInt(order.filledQuantity) > 0n,
+        (order) => isMatchingFilledPredictionOrder(order, { marketId: input.marketId, sender, direction: input.direction }),
       );
       if (!matchedOrder && attempt < 4) {
         await new Promise((resolve) => setTimeout(resolve, 1_000));
       }
     }
     if (!matchedOrder) throw new Error("DreamDEX trade fill is not indexed yet or does not match");
-    return { orderId: matchedOrder.orderId, filledQuantity: matchedOrder.filledQuantity };
+    return {
+      orderId: matchedOrder.orderId,
+      filledQuantity: matchedOrder.filledQuantity,
+      filledAmount: formatUnits(BigInt(matchedOrder.filledQuantity), market.info.baseDecimals),
+    };
+  }
+
+  async findLatestFilledPredictionTrade(input: {
+    marketId: string;
+    sender: string;
+    direction: "UP" | "DOWN";
+  }): Promise<`0x${string}`> {
+    const market = await this.findMarket(input.marketId);
+    const rows = await this.getExchange().client.getOrders(input.sender, {
+      pool: market.info.poolAddress,
+      limit: 20,
+    });
+    const expectedSide = input.direction === "UP" ? "BUY_YES" : "BUY_NO";
+    const expectedIsBid = input.direction === "UP";
+    const match = rows.find((order) =>
+      order.market.toLowerCase() === input.marketId.toLowerCase() &&
+      order.side === expectedSide &&
+      order.isBid === expectedIsBid &&
+      BigInt(order.filledQuantity) > 0n &&
+      /^0x[a-f\d]{64}$/i.test(order.placedTxHash),
+    );
+    if (!match) throw new NotFoundException({ message: "No recoverable filled DreamDEX trade was found", code: "BACK_TRADE_NOT_FOUND" });
+    return match.placedTxHash as `0x${string}`;
   }
 
   private async findMarket(marketId: string): Promise<BinaryUnifiedMarket> {

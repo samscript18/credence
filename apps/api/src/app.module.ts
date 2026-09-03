@@ -10,6 +10,7 @@ import { MarketsModule } from "./markets/markets.module.js";
 import { LeaderboardModule } from "./leaderboard/leaderboard.module.js";
 import { ReputationModule } from "./reputation/reputation.module.js";
 import { BackedPrediction, BackedPredictionSchema } from "./backs/schemas/backed-prediction.schema.js";
+import { BacksModule } from "./backs/backs.module.js";
 import { Prediction, PredictionSchema } from "./predictions/schemas/prediction.schema.js";
 import { PredictionsModule } from "./predictions/predictions.module.js";
 import { PredictionUnlock, PredictionUnlockSchema } from "./unlocks/schemas/prediction-unlock.schema.js";
@@ -40,6 +41,7 @@ import { UsersModule } from "./users/users.module.js";
     ReputationModule,
     LeaderboardModule,
     UnlocksModule,
+    BacksModule,
   ],
   controllers: [AppController],
 })

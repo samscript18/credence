@@ -18,6 +18,7 @@ export type DreamDexMarket = {
   collateralTokenAddress: string;
   collateralSymbol: string;
   collateralDecimals: number;
+  baseDecimals: number;
   tradingStartAt: string;
   expiryAt: string;
   indexedStatus: string;
@@ -144,4 +145,17 @@ export type UnlockConfirmation = {
   unlocked: true;
   unlockId: string;
   transactionHash: string;
+};
+
+export type BackedPredictionRecord = {
+  id: string;
+  predictionId: string;
+  backerAddress: string;
+  direction: DreamDexDirection;
+  stakeAmount: string;
+  marketProbabilityAtExecution: number;
+  transactionHash: string;
+  orderId: string;
+  status: "CONFIRMED";
+  createdAt: string;
 };
