@@ -1,4 +1,4 @@
-import type { Request, Response } from "express";
+import type { CookieOptions, Request, Response } from "express";
 import {
   Body,
   Controller,
@@ -17,6 +17,18 @@ import { AuthService } from "./auth.service.js";
 import type { AuthenticatedRequest } from "./auth.types.js";
 import { SESSION_COOKIE_NAME } from "./auth.types.js";
 import { NonceQueryDto, VerifyWalletDto } from "./dto/auth.dto.js";
+
+export function sessionCookieOptions(isProduction: boolean): CookieOptions {
+  return {
+    httpOnly: true,
+    secure: isProduction,
+    // The production web and API deployments use different HTTPS origins.
+    // `None` is required for credentialed XHR; local HTTP remains Lax.
+    sameSite: isProduction ? "none" : "lax",
+    maxAge: 60 * 60 * 1000,
+    path: "/",
+  };
+}
 
 @Controller("auth")
 export class AuthController {
@@ -61,12 +73,6 @@ export class AuthController {
 
   private cookieOptions() {
     const isProduction = this.configService.get<string>("NODE_ENV") === "production";
-    return {
-      httpOnly: true,
-      secure: isProduction,
-      sameSite: "lax" as const,
-      maxAge: 60 * 60 * 1000,
-      path: "/",
-    };
+    return sessionCookieOptions(isProduction);
   }
 }
