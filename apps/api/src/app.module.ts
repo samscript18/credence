@@ -1,6 +1,7 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { MongooseModule } from "@nestjs/mongoose";
+import { ScheduleModule } from "@nestjs/schedule";
 
 import { AppController } from "./app.controller.js";
 import { AuthModule } from "./auth/auth.module.js";
@@ -17,10 +18,12 @@ import { PredictionUnlock, PredictionUnlockSchema } from "./unlocks/schemas/pred
 import { UnlocksModule } from "./unlocks/unlocks.module.js";
 import { User, UserSchema } from "./users/schemas/user.schema.js";
 import { UsersModule } from "./users/users.module.js";
+import { SettlementModule } from "./settlement/settlement.module.js";
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnvironment }),
+    ScheduleModule.forRoot(),
     MongooseModule.forRootAsync({
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
@@ -42,6 +45,7 @@ import { UsersModule } from "./users/users.module.js";
     LeaderboardModule,
     UnlocksModule,
     BacksModule,
+    SettlementModule,
   ],
   controllers: [AppController],
 })

@@ -45,4 +45,10 @@ ENABLE_DEMO_SEED=true npm run demo:prepare-locked
 
 This command discovers the market through the verified adapter and stores no fake transaction hash. Rerun it when rotating Event Contracts expire.
 
+## Settlement and P&L
+
+The API polls due predictions every 30 seconds, but the expiry timer is never treated as an outcome. A prediction resolves only after the DreamDEX on-chain market state is finalized as resolved or void. Previously locked insight fields become publicly readable at that point, and predictor statistics, deterministic Brier-improvement reputation, and leaderboard ordering are recalculated.
+
+Credence reports realized P&L only when a trustworthy realized value is available. An unresolved outcome-token position or a settlement result alone is not treated as realized profit, so the MVP leaves P&L at `0` rather than estimating it from a limit price or fabricating redemption data.
+
 Product, integration, demo, deployment, and MVP limitation documentation will be completed in their mandatory phases.

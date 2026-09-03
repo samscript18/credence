@@ -20,6 +20,7 @@
     "@nestjs/jwt": "^12.0.1",
     "@nestjs/mongoose": "^12.0.0",
     "@nestjs/platform-express": "latest",
+    "@nestjs/schedule": "^12.0.1",
     "@somnia-chain/markets-sdk": "^0.29.0",
     "axios": "latest",
     "class-transformer": "latest",

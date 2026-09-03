@@ -153,4 +153,41 @@ describe("PredictionsService", () => {
     await expect(service.create("0xABC", { ...input, visibility: "LOCKED" })).rejects.toBeInstanceOf(BadRequestException);
     expect(dreamDex.verifyPredictionTrade).not.toHaveBeenCalled();
   });
+
+  it("returns every formerly locked field publicly after resolution", async () => {
+    const resolved = {
+      _id: { toString: () => "resolved-id" },
+      predictorAddress: "0xcreator",
+      source: "DEMO_SEED",
+      marketId: input.marketId,
+      marketTitle: "Resolved private call",
+      marketExpiryAt: new Date("2026-09-03T08:00:00Z"),
+      direction: "DOWN",
+      confidence: 91,
+      reasoning: "now part of the permanent record",
+      visibility: "LOCKED",
+      marketProbabilityAtEntry: 0.2,
+      stakeAmount: "1",
+      status: "RESOLVED",
+      finalOutcome: "DOWN",
+      isCorrect: true,
+      createdAt: new Date("2026-09-03T07:00:00Z"),
+    };
+    const predictionModel = { findById: () => ({ exec: () => Promise.resolve(resolved) }) };
+    const userModel = {
+      find: () => ({ exec: () => Promise.resolve([{ walletAddress: "0xcreator", reputationScore: 88, resolvedPredictions: 40, accuracy: 70 }]) }),
+    };
+    const service = new PredictionsService(
+      predictionModel as unknown as Model<Prediction>,
+      userModel as unknown as Model<User>,
+      {} as Model<PredictionUnlock>,
+      {} as DreamDexService,
+      { ranks: () => Promise.resolve(new Map([["0xcreator", 1]])) } as unknown as LeaderboardService,
+    );
+
+    const result = await service.getById("resolved-id");
+
+    expect(result.locked).toBe(false);
+    expect(result).toMatchObject({ direction: "DOWN", confidence: 91, reasoning: "now part of the permanent record", isCorrect: true });
+  });
 });
