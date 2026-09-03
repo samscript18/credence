@@ -1,4 +1,4 @@
-import type { ApiResponse, CredencePrediction, DreamDexDirection } from "@credence/shared";
+import type { ApiResponse, CredencePrediction, DreamDexDirection, PredictionFeedItem } from "@credence/shared";
 
 import { api } from "./api";
 
@@ -21,6 +21,11 @@ export const predictionsService = {
 
   async mine(): Promise<CredencePrediction[]> {
     const response = await api.get<ApiResponse<CredencePrediction[]>>("/predictions/me");
+    return response.data.data;
+  },
+
+  async feed(): Promise<PredictionFeedItem[]> {
+    const response = await api.get<ApiResponse<PredictionFeedItem[]>>("/predictions/feed");
     return response.data.data;
   },
 };

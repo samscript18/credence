@@ -1,6 +1,12 @@
-import type { CredencePrediction } from "@credence/shared";
+import type {
+  CredencePrediction,
+  GatedPrediction,
+  PredictorSummary,
+  VisiblePrediction,
+} from "@credence/shared";
 
 import type { PredictionDocument } from "./schemas/prediction.schema.js";
+import { isVerifiedPredictor, type User } from "../users/schemas/user.schema.js";
 
 export function toPredictionDto(prediction: PredictionDocument): CredencePrediction {
   return {
@@ -25,6 +31,45 @@ export function toPredictionDto(prediction: PredictionDocument): CredencePredict
     ...(prediction.finalOutcome ? { finalOutcome: prediction.finalOutcome } : {}),
     ...(prediction.isCorrect !== undefined ? { isCorrect: prediction.isCorrect } : {}),
     ...(prediction.realizedPnl ? { realizedPnl: prediction.realizedPnl } : {}),
+    createdAt: prediction.createdAt.toISOString(),
+  };
+}
+
+export function toPredictorSummary(user: User): PredictorSummary {
+  return {
+    walletAddress: user.walletAddress,
+    ...(user.displayName ? { displayName: user.displayName } : {}),
+    reputationScore: user.reputationScore,
+    resolvedPredictions: user.resolvedPredictions,
+    accuracy: user.accuracy,
+    verified: isVerifiedPredictor(user),
+  };
+}
+
+export function toVisiblePredictionDto(
+  prediction: PredictionDocument,
+  predictor: PredictorSummary,
+): VisiblePrediction {
+  return { ...toPredictionDto(prediction), locked: false, predictor };
+}
+
+export function toGatedPredictionDto(
+  prediction: PredictionDocument,
+  predictor: PredictorSummary,
+): GatedPrediction {
+  return {
+    id: prediction._id.toString(),
+    predictorAddress: prediction.predictorAddress,
+    predictor,
+    source: prediction.source,
+    marketId: prediction.marketId,
+    ...(prediction.symbol ? { symbol: prediction.symbol } : {}),
+    ...(prediction.underlying ? { underlying: prediction.underlying } : {}),
+    marketTitle: prediction.marketTitle,
+    marketExpiryAt: prediction.marketExpiryAt.toISOString(),
+    visibility: "LOCKED",
+    status: "ACTIVE",
+    locked: true,
     createdAt: prediction.createdAt.toISOString(),
   };
 }

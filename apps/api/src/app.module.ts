@@ -12,6 +12,7 @@ import { Prediction, PredictionSchema } from "./predictions/schemas/prediction.s
 import { PredictionsModule } from "./predictions/predictions.module.js";
 import { PredictionUnlock, PredictionUnlockSchema } from "./unlocks/schemas/prediction-unlock.schema.js";
 import { User, UserSchema } from "./users/schemas/user.schema.js";
+import { UsersModule } from "./users/users.module.js";
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { User, UserSchema } from "./users/schemas/user.schema.js";
     DreamDexModule,
     MarketsModule,
     PredictionsModule,
+    UsersModule,
   ],
   controllers: [AppController],
 })

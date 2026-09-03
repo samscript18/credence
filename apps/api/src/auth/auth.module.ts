@@ -7,6 +7,7 @@ import { User, UserSchema } from "../users/schemas/user.schema.js";
 import { AuthController } from "./auth.controller.js";
 import { AuthGuard } from "./auth.guard.js";
 import { AuthService } from "./auth.service.js";
+import { OptionalAuthGuard } from "./optional-auth.guard.js";
 import { AuthChallenge, AuthChallengeSchema } from "./schemas/auth-challenge.schema.js";
 
 @Module({
@@ -25,7 +26,7 @@ import { AuthChallenge, AuthChallengeSchema } from "./schemas/auth-challenge.sch
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, AuthGuard],
-  exports: [AuthService, AuthGuard],
+  providers: [AuthService, AuthGuard, OptionalAuthGuard],
+  exports: [AuthService, AuthGuard, OptionalAuthGuard],
 })
 export class AuthModule {}

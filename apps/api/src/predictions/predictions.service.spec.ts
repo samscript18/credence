@@ -4,6 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { DreamDexService } from "../dreamdex/dreamdex.service.js";
 import type { User } from "../users/schemas/user.schema.js";
+import type { PredictionUnlock } from "../unlocks/schemas/prediction-unlock.schema.js";
 import type { CreatePredictionDto } from "./dto/create-prediction.dto.js";
 import type { Prediction } from "./schemas/prediction.schema.js";
 import { PredictionsService } from "./predictions.service.js";
@@ -48,6 +49,7 @@ describe("PredictionsService", () => {
     const service = new PredictionsService(
       { create } as unknown as Model<Prediction>,
       userModel as unknown as Model<User>,
+      {} as Model<PredictionUnlock>,
       dreamDex as unknown as DreamDexService,
     );
 
@@ -75,10 +77,49 @@ describe("PredictionsService", () => {
     const service = new PredictionsService(
       { create } as unknown as Model<Prediction>,
       {} as Model<User>,
+      {} as Model<PredictionUnlock>,
       dreamDex as unknown as DreamDexService,
     );
 
     await expect(service.create("0xABC", input)).rejects.toBeInstanceOf(BadRequestException);
     expect(create).not.toHaveBeenCalled();
+  });
+
+  it("returns a gated DTO to an unauthorized feed reader", async () => {
+    const lockedPrediction = {
+      _id: { toString: () => "prediction-id" },
+      predictorAddress: "0xcreator",
+      source: "DEMO_SEED",
+      marketId: input.marketId,
+      marketTitle: "Private call",
+      marketExpiryAt: new Date(Date.now() + 60_000),
+      direction: "DOWN",
+      confidence: 95,
+      reasoning: "must stay private",
+      marketProbabilityAtEntry: 0.1,
+      visibility: "LOCKED",
+      status: "ACTIVE",
+      createdAt: new Date(),
+    };
+    const predictionModel = {
+      find: vi.fn(() => ({
+        sort: () => ({ limit: () => ({ exec: () => Promise.resolve([lockedPrediction]) }) }),
+      })),
+    };
+    const userModel = { find: vi.fn(() => ({ exec: () => Promise.resolve([]) })) };
+    const service = new PredictionsService(
+      predictionModel as unknown as Model<Prediction>,
+      userModel as unknown as Model<User>,
+      {} as Model<PredictionUnlock>,
+      {} as DreamDexService,
+    );
+
+    const [result] = await service.getFeed();
+
+    expect(result?.locked).toBe(true);
+    expect(result).not.toHaveProperty("direction");
+    expect(result).not.toHaveProperty("confidence");
+    expect(result).not.toHaveProperty("reasoning");
+    expect(result).not.toHaveProperty("marketProbabilityAtEntry");
   });
 });

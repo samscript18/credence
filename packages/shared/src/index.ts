@@ -81,3 +81,44 @@ export type CredencePrediction = {
   realizedPnl?: string;
   createdAt: string;
 };
+
+export type PredictorSummary = {
+  walletAddress: string;
+  displayName?: string;
+  reputationScore: number;
+  resolvedPredictions: number;
+  accuracy: number;
+  verified: boolean;
+  rank?: number;
+};
+
+export type VisiblePrediction = CredencePrediction & {
+  locked: false;
+  predictor: PredictorSummary;
+};
+
+export type GatedPrediction = {
+  id: string;
+  predictorAddress: string;
+  predictor: PredictorSummary;
+  source: "LIVE" | "DEMO_SEED";
+  marketId: string;
+  symbol?: string;
+  underlying?: string;
+  marketTitle: string;
+  marketExpiryAt: string;
+  visibility: "LOCKED";
+  status: "ACTIVE";
+  locked: true;
+  createdAt: string;
+};
+
+export type PredictionFeedItem = VisiblePrediction | GatedPrediction;
+
+export type PredictorProfile = PredictorSummary & {
+  correctPredictions: number;
+  incorrectPredictions: number;
+  realizedPnl: string;
+  activePredictions: PredictionFeedItem[];
+  resolvedHistory: VisiblePrediction[];
+};

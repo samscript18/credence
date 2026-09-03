@@ -9,3 +9,7 @@ export type AuthenticatedUser = {
 export type AuthenticatedRequest = Request & {
   user: AuthenticatedUser;
 };
+
+export type OptionalAuthenticatedRequest = Request & {
+  user?: AuthenticatedUser;
+};

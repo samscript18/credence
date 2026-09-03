@@ -1,10 +1,17 @@
-import { BadRequestException, ConflictException, Injectable } from "@nestjs/common";
+import type { PredictionFeedItem, PredictorSummary } from "@credence/shared";
+import { BadRequestException, ConflictException, Injectable, NotFoundException } from "@nestjs/common";
 import { InjectModel } from "@nestjs/mongoose";
 import type { Model } from "mongoose";
 
 import { DreamDexService } from "../dreamdex/dreamdex.service.js";
 import { User } from "../users/schemas/user.schema.js";
+import { PredictionUnlock } from "../unlocks/schemas/prediction-unlock.schema.js";
 import { CreatePredictionDto } from "./dto/create-prediction.dto.js";
+import {
+  toGatedPredictionDto,
+  toPredictorSummary,
+  toVisiblePredictionDto,
+} from "./prediction.dto.js";
 import { Prediction, type PredictionDocument } from "./schemas/prediction.schema.js";
 
 @Injectable()
@@ -12,6 +19,8 @@ export class PredictionsService {
   constructor(
     @InjectModel(Prediction.name) private readonly predictionModel: Model<Prediction>,
     @InjectModel(User.name) private readonly userModel: Model<User>,
+    @InjectModel(PredictionUnlock.name)
+    private readonly unlockModel: Model<PredictionUnlock>,
     private readonly dreamDex: DreamDexService,
   ) {}
 
@@ -86,5 +95,80 @@ export class PredictionsService {
       .find({ predictorAddress: walletAddress.toLowerCase() })
       .sort({ createdAt: -1 })
       .exec();
+  }
+
+  async getFeed(viewerAddress?: string): Promise<PredictionFeedItem[]> {
+    const predictions = await this.predictionModel
+      .find({ status: "ACTIVE" })
+      .sort({ createdAt: -1 })
+      .limit(50)
+      .exec();
+    return this.secureDtos(predictions, viewerAddress);
+  }
+
+  async getById(id: string, viewerAddress?: string): Promise<PredictionFeedItem> {
+    const prediction = await this.predictionModel.findById(id).exec();
+    if (!prediction) throw new NotFoundException("Prediction was not found");
+    const [dto] = await this.secureDtos([prediction], viewerAddress);
+    if (!dto) throw new NotFoundException("Prediction was not found");
+    return dto;
+  }
+
+  async getForProfile(
+    predictorAddress: string,
+    viewerAddress?: string,
+  ): Promise<{ active: PredictionFeedItem[]; resolved: PredictionFeedItem[] }> {
+    const predictions = await this.predictionModel
+      .find({ predictorAddress: predictorAddress.toLowerCase(), status: { $in: ["ACTIVE", "RESOLVED"] } })
+      .sort({ createdAt: -1 })
+      .exec();
+    const secured = await this.secureDtos(predictions, viewerAddress);
+    return {
+      active: secured.filter((prediction) => prediction.status === "ACTIVE"),
+      resolved: secured.filter((prediction) => prediction.status === "RESOLVED"),
+    };
+  }
+
+  private async secureDtos(
+    predictions: PredictionDocument[],
+    viewerAddress?: string,
+  ): Promise<PredictionFeedItem[]> {
+    if (predictions.length === 0) return [];
+    const addresses = [...new Set(predictions.map((prediction) => prediction.predictorAddress))];
+    const users = await this.userModel.find({ walletAddress: { $in: addresses } }).exec();
+    const summaries = new Map<string, PredictorSummary>(
+      users.map((user) => [user.walletAddress, toPredictorSummary(user)]),
+    );
+    const viewer = viewerAddress?.toLowerCase();
+    const unlocked = new Set<string>();
+    if (viewer) {
+      const rows = await this.unlockModel
+        .find({
+          buyerAddress: viewer,
+          status: "CONFIRMED",
+          prediction: { $in: predictions.map((prediction) => prediction._id) },
+        })
+        .select("prediction")
+        .exec();
+      rows.forEach((row) => unlocked.add(row.prediction.toString()));
+    }
+
+    return predictions.map((prediction) => {
+      const predictor = summaries.get(prediction.predictorAddress) ?? {
+        walletAddress: prediction.predictorAddress,
+        reputationScore: 50,
+        resolvedPredictions: 0,
+        accuracy: 0,
+        verified: false,
+      };
+      const canView =
+        prediction.status === "RESOLVED" ||
+        prediction.visibility === "PUBLIC" ||
+        viewer === prediction.predictorAddress ||
+        unlocked.has(prediction._id.toString());
+      return canView
+        ? toVisiblePredictionDto(prediction, predictor)
+        : toGatedPredictionDto(prediction, predictor);
+    });
   }
 }
