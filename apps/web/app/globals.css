@@ -20,3 +20,14 @@ body {
 
 button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 ::selection { background: #bef264; color: #111; }
+
+@keyframes credence-reveal {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.animate-reveal { animation: credence-reveal 300ms ease-out both; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
+}

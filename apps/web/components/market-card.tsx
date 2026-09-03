@@ -1,32 +1,13 @@
 "use client";
 
 import type { DreamDexMarketQuote } from "@credence/shared";
-import { ArrowUpRight, Clock3 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { ArrowUpRight } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { MarketProbability } from "./market-probability";
-
-function useCountdown(expiryAt: string): string {
-  const [now, setNow] = useState(() => Date.now());
-  useEffect(() => {
-    const timer = window.setInterval(() => setNow(Date.now()), 1_000);
-    return () => window.clearInterval(timer);
-  }, []);
-
-  const remaining = Math.max(0, new Date(expiryAt).getTime() - now);
-  if (remaining === 0) return "Awaiting settlement";
-  const totalSeconds = Math.floor(remaining / 1000);
-  const days = Math.floor(totalSeconds / 86_400);
-  const hours = Math.floor((totalSeconds % 86_400) / 3_600);
-  const minutes = Math.floor((totalSeconds % 3_600) / 60);
-  const seconds = totalSeconds % 60;
-  if (days > 0) return `${days}d ${hours}h remaining`;
-  if (hours > 0) return `${hours}h ${minutes}m remaining`;
-  return `${minutes}:${seconds.toString().padStart(2, "0")} remaining`;
-}
+import { MarketCountdown } from "./market-countdown";
 
 export function MarketCard({
   market,
@@ -37,7 +18,6 @@ export function MarketCard({
   selected: boolean;
   onSelect: () => void;
 }) {
-  const countdown = useCountdown(market.expiryAt);
   return (
     <Card className={cn("group p-5 transition-colors hover:border-white/15", selected && "border-lime-300/35 bg-lime-300/[.025]") }>
       <div className="flex items-start justify-between gap-4">
@@ -61,9 +41,7 @@ export function MarketCard({
       </div>
 
       <div className="mt-4 flex items-center justify-between gap-3 border-t border-white/7 pt-4">
-        <span className="flex items-center gap-1.5 text-xs text-neutral-500">
-          <Clock3 className="size-3.5" /> {countdown}
-        </span>
+        <MarketCountdown expiryAt={market.expiryAt} className="text-xs text-neutral-500" />
         <Button variant={selected ? "primary" : "ghost"} className="h-8 px-3 text-xs" onClick={onSelect}>
           {selected ? "Selected" : "Select market"}<ArrowUpRight className="ml-1.5 size-3.5" />
         </Button>

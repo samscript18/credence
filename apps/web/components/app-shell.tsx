@@ -55,7 +55,7 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
       </aside>
 
       <div className="lg:pl-60">
-        <header className="sticky top-0 z-20 flex h-20 items-center justify-between border-b border-white/7 bg-[#0a0b09]/90 px-5 backdrop-blur-md sm:px-8 lg:px-10">
+        <header className="sticky top-0 z-20 flex h-16 items-center justify-between gap-2 border-b border-white/7 bg-[#0a0b09]/90 px-4 backdrop-blur-md sm:h-20 sm:px-8 lg:px-10">
           <Link href="/" className="flex items-center gap-2 font-bold lg:hidden">
             <span className="grid size-8 place-items-center rounded-lg bg-lime-300 text-neutral-950">C</span>
             Credence
@@ -63,7 +63,7 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
           <p className="hidden text-sm text-neutral-600 lg:block">Prediction skill, proven on-chain.</p>
           <WalletButton />
         </header>
-        <main className="mx-auto w-full max-w-[1480px] px-5 py-8 pb-28 sm:px-8 lg:px-10 lg:pb-12">{children}</main>
+        <main className="mx-auto w-full max-w-[1480px] px-4 py-7 pb-28 sm:px-8 sm:py-8 lg:px-10 lg:pb-12">{children}</main>
       </div>
 
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-white/8 bg-[#0d0e0c]/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden">
