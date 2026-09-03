@@ -14,6 +14,9 @@ export class User {
   @Prop({ trim: true })
   avatarSeed?: string;
 
+  @Prop({ required: true, default: false, index: true })
+  isDemo!: boolean;
+
   @Prop({ required: true, default: 50, min: 0, max: 100, index: true })
   reputationScore!: number;
 

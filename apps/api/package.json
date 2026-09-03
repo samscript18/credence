@@ -6,6 +6,7 @@
     "build": "nest build",
     "dev": "nest start --watch",
     "lint": "eslint src --max-warnings=0",
+    "seed:demo": "nest build && node dist/demo/seed-demo.js",
     "start": "node dist/main.js",
     "test": "vitest run --passWithNoTests --exclude 'dist/**'",
     "typecheck": "tsc -p tsconfig.json --noEmit"
