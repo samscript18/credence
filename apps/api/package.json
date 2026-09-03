@@ -7,7 +7,7 @@
     "dev": "nest start --watch",
     "lint": "eslint src --max-warnings=0",
     "start": "node dist/main.js",
-    "test": "vitest run --passWithNoTests",
+    "test": "vitest run --passWithNoTests --exclude 'dist/**'",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
@@ -15,16 +15,22 @@
     "@nestjs/common": "latest",
     "@nestjs/config": "latest",
     "@nestjs/core": "latest",
+    "@nestjs/jwt": "^12.0.1",
+    "@nestjs/mongoose": "^12.0.0",
     "@nestjs/platform-express": "latest",
     "axios": "latest",
     "class-transformer": "latest",
     "class-validator": "latest",
+    "cookie-parser": "^1.4.7",
+    "mongoose": "^9.9.4",
     "reflect-metadata": "latest",
-    "rxjs": "latest"
+    "rxjs": "latest",
+    "viem": "^2.56.3"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
     "@nestjs/cli": "latest",
+    "@types/cookie-parser": "^1.4.10",
     "@types/node": "latest",
     "eslint": "^9.39.1",
     "typescript": "^6.0.2",
