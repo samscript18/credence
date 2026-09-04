@@ -197,7 +197,7 @@ ENABLE_DEMO_SEED=true npm run seed:demo
 ENABLE_DEMO_SEED=true npm run demo:prepare-locked
 ```
 
-The first command creates eight profiles and 359 resolved predictions with wins, losses, different confidence, P&L, and naturally derived reputation. It replaces only `DEMO_SEED` predictions and updates only reserved `isDemo` users. The second command discovers a current two-sided Event Contract and creates David's locked application record without a transaction hash; rerun it when rotating markets expire.
+The first command creates eight profiles and 359 resolved predictions with wins, losses, different confidence, P&L, and naturally derived reputation. It replaces only unlinked `DEMO_SEED` predictions, preserves records referenced by real Unlock/Back audit rows, and aborts if an audit parent is missing. It updates only reserved `isDemo` users. The second command retires the prior rotating demo card without deleting it, then discovers a current two-sided Event Contract and creates David's locked application record without a transaction hash; rerun it when rotating markets expire.
 
 Credence includes demo seed data to populate historical predictor profiles and demonstrate reputation and leaderboard states. Seeded historical predictions are not represented as real DreamDEX transactions. Live Event Contract discovery, supported trading flows, and demonstrated on-chain transactions use the DreamDEX/Somnia testnet integration.
 

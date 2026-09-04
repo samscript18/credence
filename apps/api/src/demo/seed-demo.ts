@@ -3,7 +3,9 @@ import "reflect-metadata";
 import mongoose, { type Model } from "mongoose";
 
 import { Prediction, PredictionSchema } from "../predictions/schemas/prediction.schema.js";
+import { BackedPrediction, BackedPredictionSchema } from "../backs/schemas/backed-prediction.schema.js";
 import { calculateReputation, sumDecimalStrings, type ResolvedForecast } from "../reputation/reputation.calculator.js";
+import { PredictionUnlock, PredictionUnlockSchema } from "../unlocks/schemas/prediction-unlock.schema.js";
 import { User, UserSchema } from "../users/schemas/user.schema.js";
 
 type Persona = {
@@ -57,7 +59,32 @@ async function seed(): Promise<void> {
   const PredictionModel =
     (mongoose.models[Prediction.name] as Model<Prediction> | undefined) ??
     mongoose.model<Prediction>(Prediction.name, PredictionSchema);
-  await PredictionModel.deleteMany({ source: "DEMO_SEED" });
+  const UnlockModel =
+    (mongoose.models[PredictionUnlock.name] as Model<PredictionUnlock> | undefined) ??
+    mongoose.model<PredictionUnlock>(PredictionUnlock.name, PredictionUnlockSchema);
+  const BackModel =
+    (mongoose.models[BackedPrediction.name] as Model<BackedPrediction> | undefined) ??
+    mongoose.model<BackedPrediction>(BackedPrediction.name, BackedPredictionSchema);
+  const [unlockedPredictionIds, backedPredictionIds] = await Promise.all([
+    UnlockModel.distinct("prediction"),
+    BackModel.distinct("prediction"),
+  ]);
+  const proofLinkedPredictionIds = [...unlockedPredictionIds, ...backedPredictionIds];
+  if (proofLinkedPredictionIds.length > 0) {
+    const linkedParents = await PredictionModel.countDocuments({
+      _id: { $in: proofLinkedPredictionIds },
+    });
+    const uniqueLinkedIds = new Set(proofLinkedPredictionIds.map((id) => id.toString()));
+    if (linkedParents !== uniqueLinkedIds.size) {
+      throw new Error(
+        "Demo seed aborted: an Unlock or Back audit row references a missing prediction",
+      );
+    }
+  }
+  await PredictionModel.deleteMany({
+    source: "DEMO_SEED",
+    ...(proofLinkedPredictionIds.length > 0 ? { _id: { $nin: proofLinkedPredictionIds } } : {}),
+  });
 
   let predictionCount = 0;
   const summaries: Array<{ name: string; reputation: number; resolved: number; verified: boolean }> = [];

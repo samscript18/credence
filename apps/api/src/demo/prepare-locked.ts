@@ -43,7 +43,12 @@ async function prepare(): Promise<void> {
   }
   if (!selected || probability === undefined) throw new Error("No live DreamDEX market with a two-sided book is available");
 
-  await PredictionModel.deleteMany({ source: "DEMO_SEED", status: "ACTIVE" });
+  // Preserve any real Unlock/Back audit records that reference an older demo
+  // card. Retired rotating cards leave the product feed without being deleted.
+  await PredictionModel.updateMany(
+    { source: "DEMO_SEED", status: "ACTIVE" },
+    { $set: { status: "FAILED" } },
+  );
   const prediction = await PredictionModel.create({
     predictor: david._id,
     predictorAddress: david.walletAddress,
