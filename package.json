@@ -19,5 +19,8 @@
   "devDependencies": {
     "concurrently": "latest",
     "next": "16.3.4"
+  },
+  "optionalDependencies": {
+    "lightningcss-linux-x64-gnu": "1.32.0"
   }
 }
