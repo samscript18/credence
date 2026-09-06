@@ -1,5 +1,63 @@
 # Credence
 
+## September 6 alignment update
+
+The replacement `AGENTS.md` is the current lifecycle requirement. New live
+predictions persist the exact market ID, market/pool addresses, window length,
+expiry, side, entry price and entry transaction. Social actions fail closed on
+non-Trading windows or unavailable chain checks. Closed locked calls stay gated
+until finalized resolution; settlement uses the original bytes32 market ID and
+checks the stored market address, rather than a symbol or successor window.
+
+Publishing refreshes the order book even when the market-list quote is absent.
+An empty book still blocks execution. The raw SDK order pins `expireTimestampNs`
+to the checked window expiry, using IOC and verified price/lot helpers.
+
+### Cloudinary profile photos
+
+Set `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, and `CLOUDINARY_API_SECRET`
+on the **API server only**. Never use `NEXT_PUBLIC_` for the secret. Uploads go
+through authenticated `POST /users/profile/avatar`, with a 2 MB limit and raster
+image signature validation. The API signs uploads and returns a Cloudinary HTTPS
+URL; MongoDB stores that URL, not a base64 image. Save Changes publishes the
+profile update and immediately updates the navbar's profile cache.
+
+For local development, put those keys in the repository-root `.env.local` and
+start both services with `npm run dev`. The API explicitly loads environment
+files from `apps/api/.env.local`, `apps/api/.env`, root `.env.local`, then root
+`.env` (first definition wins). Shell/hosting environment variables take priority.
+Restart the dev servers after changing environment files. No `NODE_OPTIONS` or
+special `--env-file` launch command is needed.
+
+### Escrow and remaining rollout checks
+
+- Paid access now uses the explicitly approved `contracts/src/InsightEscrow.sol`:
+  deposit, then buyer-signed reveal releases payment. After closure, an unrevealed
+  deposit can be refunded to its buyer. Anyone may submit the refund; an optional
+  disabled-by-default gas-funded worker now automates it. Reveal authorizes access; it
+  is not cryptographic proof that the browser displayed the HTTP response.
+- New payments remain paused until `UNLOCK_ESCROW_ADDRESS` is configured. The
+  constructor token and price must match `UNLOCK_TOKEN_ADDRESS` and
+  `UNLOCK_PRICE_BASE_UNITS`. No contract has been deployed by this update.
+- `PREDICTION_UNLOCK_BUFFER_SECONDS` defaults to 60; the contract enforces a
+  minimum 60-second deposit cutoff. Existing buyers may still reveal until close.
+- Settlement stores theoretical gross payout minus verified entry cost separately
+  from realized P&L. Claim verification uses a successful exact-market SDK redeem
+  receipt and actual ERC-20 net proceeds. Only full-position, single-market module
+  redemptions are supported; external partial/batch claims need reconciliation.
+  Theoretical P&L is an estimate and does not promise a net redemption amount.
+- Existing live records need a reviewed migration to populate their new window
+  fields. This update does not rewrite production data.
+- Browser-wallet trades, actual Cloudinary uploads and refund/claim transactions
+  have not been exercised in this update.
+
+See [lifecycle rollout and migration](docs/LIFECYCLE_ROLLOUT.md) before enabling
+payments. The escrow is testnet MVP code, not independently audited custody code.
+
+Verification is automatic: reputation **at least 80** AND **at least 25 resolved
+predictions**. Reputation starts at 50 and follows the deterministic Brier-score
+improvement formula. No manual verification toggle is provided.
+
 > DreamDEX shows what the market believes. Credence shows you who actually knows.
 
 Credence is a reputation-powered prediction marketplace built on DreamDEX Event Contracts for the Somnia × DreamDEX Event Contracts Hackathon. Prediction skill should be proven, not claimed.
@@ -21,7 +79,7 @@ Credence links every live prediction to a wallet-signed DreamDEX trade, keeps a 
 5. Resolve from finalized DreamDEX state and permanently publish the result.
 6. Recalculate reputation, statistics, verification eligibility, and ranking.
 7. A Verified Predictor can publish a locked insight.
-8. Another wallet can pay the configured ERC-20 unlock price directly to the predictor.
+8. Another wallet can deposit the configured ERC-20 price into escrow and explicitly reveal while the exact window is live.
 9. After server-side payment verification, that wallet can reveal the insight and separately choose **Back Prediction** to execute its own trade.
 
 ## Architecture
@@ -96,12 +154,14 @@ Verification is derived, not assigned. Falling below the threshold prevents new 
 
 ## Paid prediction flow
 
-The configured MVP unlock is a direct testnet ERC-20 transfer from viewer to predictor:
+The configured MVP unlock uses the buyer-approved escrow:
 
 ```text
-prepare instructions → wallet transfer → confirmed receipt
-→ API verifies token, sender, recipient, amount, network, and unused hash
-→ wallet-specific PredictionUnlock → refetch reveals structured insight
+fresh exact-window check → wallet deposit → confirmed pending payment
+→ explicit wallet reveal → escrow pays predictor → API verifies on-chain state
+→ wallet-specific confirmed access → refetch reveals structured insight
+
+closed before reveal → refund unused deposit to buyer
 ```
 
 One transaction hash cannot unlock multiple records. The confirmation dialog preserves and links the verified hash before refreshing the locked card.
@@ -159,6 +219,18 @@ npm run build
 
 ## Environment variables
 
+The user-facing `/faucet` page offers 10 test tUSDC, wallet connection and Shannon
+network switching. `/dev/dreamdex` redirects there; diagnostic market data and
+standalone test-trade controls are no longer exposed. The faucet remains testnet
+only, including in production builds. STT is needed for the wallet transaction's gas.
+
+To use the copied DEV database, set `MONGODB_CONNECTION_KEY=MONGODB_URI_DEV`
+alongside `MONGODB_URI_DEV`. The default remains `MONGODB_URI`; neither URI is
+overwritten. Local automatic refunds are enabled via `ENABLE_AUTO_UNLOCK_REFUNDS=true`
+with the configured escrow, deployment block, signer and fee cap. Run only one
+database/deployment per signer. Restart the API after environment changes;
+external hosting secrets must be configured separately.
+
 Start with [.env.example](.env.example).
 
 Frontend build-time variables:
@@ -177,6 +249,8 @@ Backend variables:
 | --- | --- |
 | `NODE_ENV` | Set `production` when deployed |
 | `MONGODB_URI` | MongoDB connection string |
+| `MONGODB_URI_DEV` | Alternate DEV database connection string |
+| `MONGODB_CONNECTION_KEY` | Explicitly select `MONGODB_URI` (default) or `MONGODB_URI_DEV` |
 | `JWT_SECRET` | Strong production-only signing secret |
 | `WEB_ORIGIN` | Exact Vercel frontend origin for credentialed CORS |
 | `SOMNIA_RPC_URL` | Shannon HTTP RPC |
@@ -194,16 +268,24 @@ Seed deterministic history:
 
 ```bash
 ENABLE_DEMO_SEED=true npm run seed:demo
-ENABLE_DEMO_SEED=true npm run demo:prepare-locked
+DEMO_WINDOW_SECONDS=3600 npm run demo:prepare-locked
 ```
 
-The first command creates eight profiles and 359 resolved predictions with wins, losses, different confidence, P&L, and naturally derived reputation. It replaces only unlinked `DEMO_SEED` predictions, preserves records referenced by real Unlock/Back audit rows, and aborts if an audit parent is missing. It updates only reserved `isDemo` users. The second command retires the prior rotating demo card without deleting it, then discovers a current two-sided Event Contract and creates David's locked application record without a transaction hash; rerun it when rotating markets expire.
+The first command creates eight profiles and 359 resolved predictions with wins, losses, different confidence, P&L, and naturally derived reputation. It replaces only unlinked `DEMO_SEED` predictions, preserves records referenced by real Unlock/Back audit rows, and aborts if an audit parent is missing. It updates only reserved `isDemo` users. The second command is read-only: it discovers an exact Trading window with a two-sided book and at least `DEMO_MIN_MARKET_REMAINING_SECONDS` remaining (default 900). A real verified wallet must publish the locked prediction. No active seed card or transaction is manufactured.
 
 Credence includes demo seed data to populate historical predictor profiles and demonstrate reputation and leaderboard states. Seeded historical predictions are not represented as real DreamDEX transactions. Live Event Contract discovery, supported trading flows, and demonstrated on-chain transactions use the DreamDEX/Somnia testnet integration.
 
 ## Deployment: Vercel + Render + MongoDB Atlas
 
 No deployment is performed automatically. Push the repository to Git first.
+
+The public site is at `/`; the application feed is at `/app`. Markets,
+Leaderboard and Profile retain their existing URLs. Set `SITE_URL` to the public
+origin when using a custom domain so canonical and social URLs match your site.
+Vercel's production host is used automatically when this is omitted.
+
+Design-pass progress and the browser verification procedure are recorded in
+`docs/design-pass.md`. Browser tests use isolated fixtures and do not execute trades.
 
 ### Vercel frontend
 
@@ -235,9 +317,9 @@ The folder/command choices follow the platforms' current monorepo guidance: [Ver
 1. Run both demo preparation commands shortly before presenting.
 2. Open David at `/profile/0x3232323232323232323232323232323232323232`.
 3. Show rank, reputation, accuracy, 38 wins, 7 losses, and permanent history.
-4. Show the current active locked BTC/ETH card.
+4. Publish a real locked call from a verified wallet on the exact Trading window discovered by the script. The script no longer creates an active seeded call.
 5. Connect the funded Shannon viewer wallet and sign in.
-6. Unlock, approve the real tUSDC transfer, and show its explorer hash.
+6. Once refund protection is configured, unlock from the second wallet while the same window is still Trading and show its explorer hash.
 7. Reveal David's direction, confidence, entry probability, and reasoning.
 8. Choose **Back Prediction**, compare entry with current probability, and confirm the separate DreamDEX trade.
 9. Show the confirmed order, Back record, and explorer transaction.
@@ -250,7 +332,7 @@ Use a second funded viewer wallet or prepare a fresh locked record before repeat
 - Locked predictions are application-level gated content in the MVP. Because DreamDEX positions are executed on a public blockchain, sophisticated observers may be able to infer aspects of on-chain trading activity.
 - The MVP does not provide cryptographic secrecy, zero-knowledge privacy, or private order flow.
 - Seeded history demonstrates reputation and leaderboard behavior but is explicitly distinct from live chain proof.
-- Demo locked records attach structured insight to a dynamically discovered real market; they do not claim a fake creator transaction.
-- Unlock monetization is a direct token transfer rather than a custom revenue-sharing contract.
+- Demo seed records are historical only. The demo discovery script prints a live window for an actual wallet-signed publish; it does not create active seeded predictions.
+- Unlock escrow requires explicit deployment/configuration; refunds require a submitted transaction and gas.
 - Realized P&L remains unchanged until reliable realized/redemption data exists.
 - There is no automated copy trading: every Back action is a separate user decision and wallet signature.

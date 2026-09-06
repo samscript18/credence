@@ -2,7 +2,7 @@ import { Prop, Schema, SchemaFactory } from "@nestjs/mongoose";
 import { HydratedDocument, Schema as MongooseSchema, Types } from "mongoose";
 
 export type PredictionUnlockDocument = HydratedDocument<PredictionUnlock>;
-export type UnlockStatus = "PENDING" | "CONFIRMED" | "FAILED";
+export type UnlockStatus = "PENDING" | "CONFIRMED" | "FAILED" | "REFUNDED";
 
 @Schema({ timestamps: true })
 export class PredictionUnlock {
@@ -27,7 +27,7 @@ export class PredictionUnlock {
   @Prop({ required: true, lowercase: true, trim: true })
   transactionHash!: string;
 
-  @Prop({ type: String, required: true, enum: ["PENDING", "CONFIRMED", "FAILED"] })
+  @Prop({ type: String, required: true, enum: ["PENDING", "CONFIRMED", "FAILED", "REFUNDED"] })
   status!: UnlockStatus;
 
   @Prop()

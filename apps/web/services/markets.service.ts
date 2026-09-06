@@ -4,7 +4,8 @@ import { api } from "./api";
 
 export const marketsService = {
   async list(): Promise<DreamDexMarketQuote[]> {
-    const response = await api.get<ApiResponse<DreamDexMarketQuote[]>>("/markets");
+    // Covers the API's 25s discovery plus up to 5s quote reads.
+    const response = await api.get<ApiResponse<DreamDexMarketQuote[]>>("/markets", { timeout: 35_000 });
     return response.data.data;
   },
 

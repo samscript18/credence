@@ -1,27 +1,121 @@
 "use client";
 
-import { AlertCircle, Crown, Target, Trophy, WalletCards } from "lucide-react";
-
+import { Radio, Signal, History } from "lucide-react";
 import { useProfile } from "@/hooks/use-profile";
-import { apiErrorMessage } from "@/services/api";
 import { PredictionCard } from "./prediction-card";
-import { PredictorAvatar } from "./predictor-avatar";
-import { VerifiedBadge } from "./reputation-badge";
-import { Card } from "./ui/card";
+import { PredictionHistoryRow } from "./prediction-history-row";
+import { ProfileHeader } from "./profile-header";
+import { ContentState } from "./content-state";
+import { Button } from "./ui/button";
 import { Skeleton } from "./ui/skeleton";
 
 export function ProfileScreen({ address }: { address: string }) {
   const profile = useProfile(address);
-  if (profile.isLoading) return <div><Skeleton className="h-28" /><div className="mt-5 grid grid-cols-2 gap-3 lg:grid-cols-4"><Skeleton className="h-24" /><Skeleton className="h-24" /><Skeleton className="h-24" /><Skeleton className="h-24" /></div></div>;
-  if (profile.isError || !profile.data) return <Card className="p-10 text-center"><AlertCircle className="mx-auto size-8 text-orange-300" /><h1 className="mt-4 font-bold">Profile unavailable</h1><p className="mt-2 text-sm text-neutral-500">{apiErrorMessage(profile.error)}</p></Card>;
+
+  if (profile.isLoading) {
+    return (
+      <div className="space-y-8" aria-label="Loading predictor profile">
+        <Skeleton className="h-64 rounded-2xl bg-white/[0.02]" />
+        <div className="grid gap-4 sm:grid-cols-2">
+          <Skeleton className="h-56 rounded-xl bg-white/[0.02]" />
+          <Skeleton className="h-56 rounded-xl bg-white/[0.02]" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!profile.data) {
+    return (
+      <div className="rounded-xl border border-white/5 bg-[#0B0C0E] p-8">
+        <ContentState
+          error
+          icon={<Signal className="size-5" />}
+          title="Profile unavailable"
+          description="We couldn't load this predictor's track record. Check the address or try again."
+          action={
+            <Button variant="secondary" onClick={() => void profile.refetch()} disabled={profile.isFetching}>
+              Retry
+            </Button>
+          }
+        />
+      </div>
+    );
+  }
+
   const user = profile.data;
-  const name = user.displayName ?? `${user.walletAddress.slice(0, 6)}…${user.walletAddress.slice(-4)}`;
-  const stats = [
-    { label: "Global rank", value: user.rank ? `#${user.rank}` : "—", icon: Crown },
-    { label: "Reputation", value: Math.round(user.reputationScore * 10) / 10, icon: Trophy },
-    { label: "Accuracy", value: `${Math.round(user.accuracy * 10) / 10}%`, icon: Target },
-    { label: "Resolved", value: user.resolvedPredictions, icon: WalletCards },
-    { label: "Realized P&L", value: user.realizedPnl, icon: WalletCards },
-  ];
-  return <div><div className="flex items-center gap-4"><PredictorAvatar className="size-14 text-base" address={user.walletAddress} name={user.displayName} /><div className="min-w-0"><div className="flex flex-wrap items-center gap-2"><h1 className="truncate text-2xl font-bold">{name}</h1>{user.verified ? <VerifiedBadge /> : null}</div><p className="mt-1 truncate font-mono text-xs text-neutral-600">{user.walletAddress}</p></div></div><div className="mt-7 grid grid-cols-2 gap-3 lg:grid-cols-5">{stats.map(({ label, value, icon: Icon }) => <Card key={label} className="p-4"><Icon className="size-4 text-neutral-600" /><p className="mt-4 text-xl font-bold tabular-nums">{value}</p><p className="mt-1 text-xs text-neutral-600">{label}</p></Card>)}</div><section className="mt-10"><h2 className="text-sm font-semibold">Active predictions</h2><div className="mt-4 grid gap-4 lg:grid-cols-2">{user.activePredictions.length ? user.activePredictions.map((prediction) => <PredictionCard key={prediction.id} prediction={prediction} />) : <Card className="col-span-full p-8 text-center text-sm text-neutral-500">No active predictions.</Card>}</div></section><section className="mt-10"><h2 className="text-sm font-semibold">Permanent resolved history</h2><p className="mt-1 text-xs text-neutral-600">Wins and losses cannot be hidden.</p><div className="mt-4 grid gap-4 lg:grid-cols-2">{user.resolvedHistory.length ? user.resolvedHistory.map((prediction) => <PredictionCard key={prediction.id} prediction={prediction} />) : <Card className="col-span-full p-8 text-center text-sm text-neutral-500">No resolved history yet.</Card>}</div></section></div>;
+
+  return (
+    <div className="space-y-8">
+      {profile.isError && (
+        <p role="status" className="rounded-xl border border-rose-400/20 bg-rose-400/5 px-4 py-3 font-mono text-xs text-rose-300">
+          The latest profile update failed. Showing the last loaded record.
+          <button type="button" onClick={() => void profile.refetch()} className="ml-2 underline text-signal">
+            Retry
+          </button>
+        </p>
+      )}
+
+      {/* Profile Header */}
+      <ProfileHeader user={user} />
+
+      {/* Active Insight Section */}
+      <section aria-labelledby="active-heading" className="space-y-4">
+        <div className="flex items-center justify-between border-b border-white/5 pb-3">
+          <h2 id="active-heading" className="font-mono text-xs uppercase tracking-[0.18em] text-muted">
+            Active Predictions ({user.activePredictions.length})
+          </h2>
+          <span className="font-mono text-[11px] text-signal">Live in market</span>
+        </div>
+
+        <div className="grid items-start gap-4 lg:grid-cols-2">
+          {user.activePredictions.length ? (
+            user.activePredictions.map((prediction) => (
+              <PredictionCard key={prediction.id} prediction={prediction} />
+            ))
+          ) : (
+            <div className="col-span-full rounded-xl border border-white/5 bg-[#0B0C0E] p-6">
+              <ContentState
+                icon={<Radio className="size-5" />}
+                title="No active calls right now."
+                description="Active public and locked predictions will appear here when this predictor enters a live DreamDEX market."
+              />
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Historical Track Record Section */}
+      <section aria-labelledby="history-heading" className="space-y-4">
+        <div className="flex flex-wrap items-end justify-between gap-3 border-b border-white/5 pb-3">
+          <div>
+            <h2 id="history-heading" className="font-mono text-xs uppercase tracking-[0.18em] text-muted">
+              Permanent Track Record
+            </h2>
+            <p className="mt-1 text-[12px] text-muted/70">
+              Every settled call remains onchain. Wins and losses included without deletion.
+            </p>
+          </div>
+          <span className="font-mono text-[11px] text-muted">
+            {user.resolvedHistory.length} settled calls
+          </span>
+        </div>
+
+        {user.resolvedHistory.length ? (
+          <div className="rounded-xl border border-white/5 bg-[#0B0C0E] overflow-hidden divide-y divide-white/[0.04]">
+            {user.resolvedHistory.map((prediction) => (
+              <PredictionHistoryRow key={prediction.id} prediction={prediction} />
+            ))}
+          </div>
+        ) : (
+          <div className="rounded-xl border border-white/5 bg-[#0B0C0E] p-8">
+            <ContentState
+              icon={<History className="size-5" />}
+              title="Nothing has settled yet."
+              description="Settled predictions become permanent reputation evidence here."
+            />
+          </div>
+        )}
+      </section>
+    </div>
+  );
 }

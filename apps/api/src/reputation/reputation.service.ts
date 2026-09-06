@@ -31,7 +31,8 @@ export class ReputationService {
               marketProbabilityAtEntry: prediction.marketProbabilityAtEntry,
               finalOutcome: prediction.finalOutcome,
               createdAt: prediction.createdAt,
-              ...(prediction.realizedPnl ? { realizedPnl: prediction.realizedPnl } : {}),
+              // Settlement alone cannot realize live P&L; require claim proof.
+              ...(prediction.realizedPnl && (prediction.source === "DEMO_SEED" || prediction.claimTransactionHash) ? { realizedPnl: prediction.realizedPnl } : {}),
             }]
           : [],
       ),

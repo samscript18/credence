@@ -3,6 +3,8 @@ node_modules/
 .next/
 dist/
 coverage/
+test-results/
+playwright-report/
 .env
 .env.local
 .env.*.local
@@ -10,3 +12,7 @@ coverage/
 *.log
 *.tsbuildinfo
 .DS_Store
+contracts/out/
+contracts/cache/
+.local-operations/
+AGENTS.md

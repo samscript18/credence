@@ -1,25 +1,33 @@
 "use client";
 
-import { AlertCircle, BarChart3, RefreshCw } from "lucide-react";
-
+import { BarChart3, RefreshCw, Signal } from "lucide-react";
+import { useState } from "react";
 import { MarketCard } from "@/components/market-card";
 import { PredictionComposer } from "@/components/prediction-composer";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMarkets } from "@/hooks/use-markets";
-import { apiErrorMessage } from "@/services/api";
 import { useComposerStore } from "@/stores/composer.store";
+import { ContentState } from "./content-state";
 
 function MarketsSkeleton() {
   return (
-    <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3" aria-label="Loading markets">
+    <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3" aria-label="Loading markets">
       {Array.from({ length: 6 }, (_, index) => (
-        <Card key={index} className="p-5">
-          <div className="flex gap-3"><Skeleton className="size-10 rounded-full" /><div className="flex-1"><Skeleton className="h-4 w-4/5" /><Skeleton className="mt-2 h-3 w-2/5" /></div></div>
-          <div className="mt-5 grid grid-cols-2 gap-2"><Skeleton className="h-16" /><Skeleton className="h-16" /></div>
-          <Skeleton className="mt-5 h-8 w-full" />
-        </Card>
+        <div key={index} className="rounded-xl border border-white/5 bg-[#0B0C0E] p-5 space-y-4">
+          <div className="flex gap-3">
+            <Skeleton className="size-10 rounded-full" />
+            <div className="flex-1">
+              <Skeleton className="h-4 w-4/5" />
+              <Skeleton className="mt-2 h-3 w-2/5" />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <Skeleton className="h-16 rounded-lg" />
+            <Skeleton className="h-16 rounded-lg" />
+          </div>
+          <Skeleton className="h-9 w-full rounded-md" />
+        </div>
       ))}
     </div>
   );
@@ -27,57 +35,140 @@ function MarketsSkeleton() {
 
 export function MarketsScreen() {
   const markets = useMarkets();
+  const [sort, setSort] = useState<"default" | "expiry">("default");
   const selectedMarketId = useComposerStore((state) => state.selectedMarketId);
   const selectMarket = useComposerStore((state) => state.selectMarket);
   const clearMarket = useComposerStore((state) => state.clearMarket);
   const selectedMarket = markets.data?.find((market) => market.marketId === selectedMarketId);
+  const ordered =
+    sort === "expiry"
+      ? [...(markets.data ?? [])].sort(
+          (a, b) => new Date(a.expiryAt).getTime() - new Date(b.expiryAt).getTime()
+        )
+      : markets.data;
 
   return (
-    <div>
-      <div className="flex flex-col justify-between gap-5 sm:flex-row sm:items-end">
-        <div>
-          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-[.18em] text-lime-300">
-            <span className="size-1.5 rounded-full bg-lime-300" /> Live on DreamDEX
+    <div className="space-y-8">
+      {/* Vestra Page Header */}
+      <header className="space-y-1.5">
+        <h1 className="text-lg font-medium tracking-tight text-foreground">Markets · DreamDEX</h1>
+        <p className="max-w-3xl text-[13px] leading-snug text-muted">
+          Live DreamDEX Event Contracts on Somnia Shannon Testnet. Take a position, calibrate your confidence, and put your market view on record.
+        </p>
+      </header>
+
+      {/* Overview Banner */}
+      <section className="rounded-2xl border border-white/[0.06] bg-[#0B0C0E] p-5 sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-muted">
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400">
+              <span aria-hidden="true" className="absolute inset-0 animate-ping rounded-full bg-emerald-400 opacity-60" />
+            </span>
+            Live orderbooks on Somnia Shannon
           </div>
-          <h1 className="mt-3 text-3xl font-bold tracking-[-.04em] sm:text-4xl">Event markets</h1>
-          <p className="mt-3 max-w-2xl text-sm leading-6 text-neutral-500 sm:text-base">
-            Read the market, make your call, and build a prediction record that settles in public.
-          </p>
+          <button
+            type="button"
+            onClick={() => void markets.refetch()}
+            disabled={markets.isFetching}
+            className="cursor-pointer inline-flex items-center gap-1.5 font-mono text-[11px] text-muted hover:text-foreground transition-colors disabled:opacity-50"
+          >
+            <RefreshCw className={`size-3 ${markets.isFetching ? "animate-spin" : ""}`} />
+            Refresh quotes
+          </button>
         </div>
-        <Button variant="secondary" onClick={() => void markets.refetch()} disabled={markets.isFetching}>
-          <RefreshCw className={`mr-2 size-4 ${markets.isFetching ? "animate-spin" : ""}`} />
-          Refresh
-        </Button>
+
+        <div className="mt-5 grid grid-cols-3 divide-x divide-white/[0.06]">
+          <div className="px-3 first:pl-0">
+            <div className="font-mono text-2xl font-medium tracking-tight tabular-nums text-foreground sm:text-3xl">
+              {markets.isLoading ? "—" : markets.data?.length ?? 0}
+            </div>
+            <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
+              Live contracts
+            </div>
+          </div>
+          <div className="px-3">
+            <div className="font-mono text-2xl font-medium tracking-tight tabular-nums text-signal sm:text-3xl">
+              15m
+            </div>
+            <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
+              Contract window
+            </div>
+          </div>
+          <div className="px-3">
+            <div className="font-mono text-2xl font-medium tracking-tight tabular-nums text-foreground sm:text-3xl">
+              USDso
+            </div>
+            <div className="mt-1 font-mono text-[10px] uppercase tracking-[0.16em] text-muted">
+              Collateral asset
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Filter and Sort bar */}
+      <div className="flex flex-wrap items-center justify-between gap-4 border-b border-white/5 pb-4">
+        <div className="flex items-center gap-2">
+          <span className="font-mono text-[12px] font-medium text-foreground">
+            Available Contracts
+          </span>
+          <span className="rounded-sm border border-white/10 bg-white/[0.03] px-1.5 py-0.5 font-mono text-[9px] uppercase tracking-[0.16em] text-muted">
+            {markets.data?.length ?? 0}
+          </span>
+        </div>
+
+        <label className="flex items-center gap-2 font-mono text-[11px] text-muted">
+          Sort
+          <select
+            className="rounded-md border border-white/5 bg-white/[0.02] px-2.5 py-1.5 font-mono text-[11px] text-foreground outline-none hover:border-white/10"
+            value={sort}
+            onChange={(event) => setSort(event.target.value as "default" | "expiry")}
+          >
+            <option value="default" className="bg-[#0B0C0E]">Default order</option>
+            <option value="expiry" className="bg-[#0B0C0E]">Ending soonest</option>
+          </select>
+        </label>
       </div>
 
-      <div className="mt-8 flex items-center justify-between border-b border-white/7 pb-4">
-        <p className="text-sm font-semibold">Available now</p>
-        <p className="text-xs text-neutral-600">{markets.data?.length ?? 0} contracts · updates every 15s</p>
-      </div>
+      {/* Markets Content */}
+      <div>
+        {markets.isLoading && <MarketsSkeleton />}
 
-      <div className="mt-5">
-        {markets.isLoading ? <MarketsSkeleton /> : null}
+        {markets.isError && (
+          <div className="mb-5">
+            <ContentState
+              error
+              icon={<Signal className="size-5" />}
+              title="DreamDEX isn't responding."
+              description={
+                markets.data?.length
+                  ? "You're seeing the last loaded markets. Refresh to check the latest state before trading."
+                  : "Market data couldn't be refreshed. Please try again shortly."
+              }
+              action={
+                <Button variant="secondary" onClick={() => void markets.refetch()} disabled={markets.isFetching}>
+                  Retry
+                </Button>
+              }
+            />
+          </div>
+        )}
 
-        {markets.isError ? (
-          <Card className="flex min-h-64 flex-col items-center justify-center p-8 text-center">
-            <AlertCircle className="size-8 text-orange-300" />
-            <h2 className="mt-4 font-semibold">Markets could not be loaded</h2>
-            <p className="mt-2 max-w-md text-sm text-neutral-500">{apiErrorMessage(markets.error)}</p>
-            <Button className="mt-5" onClick={() => void markets.refetch()}>Try again</Button>
-          </Card>
-        ) : null}
+        {markets.isSuccess && markets.data.length === 0 && (
+          <ContentState
+            icon={<BarChart3 className="size-5" />}
+            title="No live Event Contracts right now."
+            description="Check again shortly for new DreamDEX markets."
+            action={
+              <Button variant="secondary" onClick={() => void markets.refetch()} disabled={markets.isFetching}>
+                Check again
+              </Button>
+            }
+          />
+        )}
 
-        {markets.isSuccess && markets.data.length === 0 ? (
-          <Card className="flex min-h-64 flex-col items-center justify-center p-8 text-center">
-            <BarChart3 className="size-8 text-neutral-600" />
-            <h2 className="mt-4 font-semibold">No tradable Event Contracts</h2>
-            <p className="mt-2 text-sm text-neutral-500">DreamDEX has no live contracts right now. Check back shortly.</p>
-          </Card>
-        ) : null}
-
-        {markets.isSuccess && markets.data.length > 0 ? (
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {markets.data.map((market) => (
+        {Boolean(ordered?.length) && (
+          <div className="grid gap-4 md:grid-cols-2 2xl:grid-cols-3">
+            {ordered?.map((market) => (
               <MarketCard
                 key={market.marketId}
                 market={market}
@@ -86,10 +177,14 @@ export function MarketsScreen() {
               />
             ))}
           </div>
-        ) : null}
+        )}
       </div>
 
-      {selectedMarket ? <PredictionComposer market={selectedMarket} onClose={clearMarket} /> : null}
+      <p className="border-t border-white/5 pt-4 font-mono text-[11px] leading-relaxed text-muted/60">
+        Prices and probabilities originate directly from DreamDEX Event Contracts. Contracts reaching expiry transition to settlement until the oracle finalizes the outcome.
+      </p>
+
+      {selectedMarket && <PredictionComposer market={selectedMarket} onClose={clearMarket} />}
     </div>
   );
 }

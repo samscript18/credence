@@ -1,4 +1,5 @@
 import { Module } from "@nestjs/common";
+import { resolve } from "node:path";
 import { ConfigModule, ConfigService } from "@nestjs/config";
 import { MongooseModule } from "@nestjs/mongoose";
 import { ScheduleModule } from "@nestjs/schedule";
@@ -6,6 +7,7 @@ import { ScheduleModule } from "@nestjs/schedule";
 import { AppController } from "./app.controller.js";
 import { AuthModule } from "./auth/auth.module.js";
 import { validateEnvironment } from "./config/environment.js";
+import { apiEnvironmentFiles } from "./config/env-files.js";
 import { DreamDexModule } from "./dreamdex/dreamdex.module.js";
 import { MarketsModule } from "./markets/markets.module.js";
 import { LeaderboardModule } from "./leaderboard/leaderboard.module.js";
@@ -21,32 +23,36 @@ import { UsersModule } from "./users/users.module.js";
 import { SettlementModule } from "./settlement/settlement.module.js";
 
 @Module({
-  imports: [
-    ConfigModule.forRoot({ isGlobal: true, validate: validateEnvironment }),
-    ScheduleModule.forRoot(),
-    MongooseModule.forRootAsync({
-      inject: [ConfigService],
-      useFactory: (config: ConfigService) => ({
-        uri: config.get<string>("MONGODB_URI", "mongodb://localhost:27017/credence"),
-      }),
-    }),
-    MongooseModule.forFeature([
-      { name: User.name, schema: UserSchema },
-      { name: Prediction.name, schema: PredictionSchema },
-      { name: PredictionUnlock.name, schema: PredictionUnlockSchema },
-      { name: BackedPrediction.name, schema: BackedPredictionSchema },
-    ]),
-    AuthModule,
-    DreamDexModule,
-    MarketsModule,
-    PredictionsModule,
-    UsersModule,
-    ReputationModule,
-    LeaderboardModule,
-    UnlocksModule,
-    BacksModule,
-    SettlementModule,
-  ],
-  controllers: [AppController],
+	imports: [
+		ConfigModule.forRoot({
+			isGlobal: true,
+			envFilePath: apiEnvironmentFiles(resolve(__dirname, "..")),
+			validate: validateEnvironment,
+		}),
+		ScheduleModule.forRoot(),
+		MongooseModule.forRootAsync({
+			inject: [ConfigService],
+			useFactory: (config: ConfigService) => ({
+				uri: config.get<string>(config.get<string>("MONGODB_CONNECTION_KEY", "MONGODB_URI"), "mongodb://localhost:27017/credence"),
+			}),
+		}),
+		MongooseModule.forFeature([
+			{ name: User.name, schema: UserSchema },
+			{ name: Prediction.name, schema: PredictionSchema },
+			{ name: PredictionUnlock.name, schema: PredictionUnlockSchema },
+			{ name: BackedPrediction.name, schema: BackedPredictionSchema },
+		]),
+		AuthModule,
+		DreamDexModule,
+		MarketsModule,
+		PredictionsModule,
+		UsersModule,
+		ReputationModule,
+		LeaderboardModule,
+		UnlocksModule,
+		BacksModule,
+		SettlementModule,
+	],
+	controllers: [AppController],
 })
 export class AppModule {}

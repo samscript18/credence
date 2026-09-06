@@ -65,6 +65,7 @@ export function calculateReputation(predictions: ResolvedForecast[]): Reputation
     correctPredictions: correct,
     incorrectPredictions: incorrect,
     accuracy: resolved === 0 ? 0 : (correct / resolved) * 100,
-    realizedPnl: sumDecimalStrings(chronological.map((prediction) => prediction.realizedPnl ?? "0")),
+    // Voids do not affect skill scoring, but verified refund claims affect P&L.
+    realizedPnl: sumDecimalStrings(predictions.map((prediction) => prediction.realizedPnl ?? "0")),
   };
 }

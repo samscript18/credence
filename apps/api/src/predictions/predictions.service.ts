@@ -7,13 +7,14 @@ import { DreamDexService } from "../dreamdex/dreamdex.service.js";
 import { LeaderboardService } from "../leaderboard/leaderboard.service.js";
 import { isVerifiedPredictor, User } from "../users/schemas/user.schema.js";
 import { PredictionUnlock } from "../unlocks/schemas/prediction-unlock.schema.js";
-import { CreatePredictionDto } from "./dto/create-prediction.dto.js";
+import { CreateDraftDto, CreatePredictionDto } from "./dto/create-prediction.dto.js";
 import {
   toGatedPredictionDto,
   toPredictorSummary,
   toVisiblePredictionDto,
 } from "./prediction.dto.js";
 import { Prediction, type PredictionDocument } from "./schemas/prediction.schema.js";
+import { ReputationService } from "../reputation/reputation.service.js";
 
 @Injectable()
 export class PredictionsService {
@@ -24,14 +25,25 @@ export class PredictionsService {
     private readonly unlockModel: Model<PredictionUnlock>,
     private readonly dreamDex: DreamDexService,
     private readonly leaderboard: LeaderboardService,
+    private readonly reputation?: ReputationService,
   ) {}
 
   async create(walletAddress: string, input: CreatePredictionDto): Promise<PredictionDocument> {
     const canonicalAddress = walletAddress.toLowerCase();
-    const market = await this.dreamDex.getEventMarket(input.marketId);
-    if (!market.tradable || new Date(market.expiryAt).getTime() <= Date.now()) {
-      throw new BadRequestException({ message: "DreamDEX market is no longer tradable", code: "MARKET_EXPIRED" });
+    const existing = await this.predictionModel.findOne({ transactionHash: input.transactionHash.toLowerCase() }).exec();
+    if (existing) {
+      if (existing.predictorAddress !== canonicalAddress || existing.marketId !== input.marketId) throw new ConflictException("This transaction is already linked to another prediction.");
+      return existing;
     }
+    throw new BadRequestException("Create a server draft before trading. This endpoint only recovers existing records.");
+  }
+
+  async createDraft(walletAddress: string, input: CreateDraftDto): Promise<PredictionDocument> {
+    const canonicalAddress = walletAddress.toLowerCase();
+    if (!Number.isFinite(Number(input.stakeAmount)) || Number(input.stakeAmount) <= 0) throw new BadRequestException("Stake must be positive");
+    const market = await this.dreamDex.getEventMarket(input.marketId);
+    if (market.marketId.toLowerCase() !== input.marketId.toLowerCase()) throw new BadRequestException("Exact draft market mismatch");
+    await this.dreamDex.assertTradingWindow(market.marketId, market.marketAddress);
     const user = await this.userModel
       .findOneAndUpdate(
         { walletAddress: canonicalAddress },
@@ -47,29 +59,27 @@ export class PredictionsService {
       });
     }
 
-    let proof: { orderId: string; filledQuantity: string };
-    try {
-      proof = await this.dreamDex.verifyPredictionTrade({
-        transactionHash: input.transactionHash,
-        marketId: market.marketId,
-        sender: canonicalAddress,
-        direction: input.direction,
-      });
-    } catch {
-      throw new BadRequestException({
-        message: "The transaction could not be verified as your filled DreamDEX trade",
-        code: "TRADE_VERIFICATION_FAILED",
-      });
-    }
-
-    try {
+    const probabilities = await this.dreamDex.getMarketProbabilities(market.marketId);
+    const draftBlockNumber = await this.dreamDex.draftBlock();
+    // Repeat after slow metadata/quote reads; do not create a draft after close.
+    await this.dreamDex.assertTradingWindow(market.marketId, market.marketAddress);
+    if (Date.now() >= Date.parse(market.expiryAt)) throw new BadRequestException("This window has ended");
+    const probability = input.direction === "UP" ? probabilities.yes : probabilities.no;
       return await this.predictionModel.create({
         predictor: user._id,
         predictorAddress: canonicalAddress,
         source: "LIVE",
         marketId: market.marketId,
+        marketAddress: market.marketAddress.toLowerCase(),
+        poolAddress: market.poolAddress.toLowerCase(),
+        windowSeconds: Math.round((new Date(market.expiryAt).getTime() - new Date(market.tradingStartAt).getTime()) / 1000),
+        expiry: new Date(market.expiryAt),
+        side: input.direction === "UP" ? "Up" : "Down",
+        entryPrice: probabilities.yes,
+        draftBlockNumber,
+        marketStatus: "closed",
         venueId: market.venueId ?? undefined,
-        symbol: market.symbol,
+        symbol: market.underlying,
         underlying: market.underlying,
         marketTitle: market.title,
         marketStartAt: new Date(market.tradingStartAt),
@@ -78,22 +88,50 @@ export class PredictionsService {
         confidence: input.confidence,
         reasoning: input.reasoning?.trim() || undefined,
         visibility: input.visibility,
-        marketProbabilityAtEntry: input.marketProbabilityAtEntry,
+        marketProbabilityAtEntry: probability,
         stakeAmount: input.stakeAmount,
         collateralSymbol: market.collateralSymbol,
         collateralTokenAddress: market.collateralTokenAddress,
-        transactionHash: input.transactionHash.toLowerCase(),
-        orderId: proof.orderId,
-        positionReference: proof.filledQuantity,
-        status: "ACTIVE",
+        collateralDecimals: market.collateralDecimals,
+        status: "PENDING_TRADE",
       });
+  }
+
+  async confirmDraft(id: string, wallet: string, hash: `0x${string}`): Promise<PredictionDocument> {
+    const row = await this.predictionModel.findById(id).exec();
+    if (!row || row.predictorAddress !== wallet.toLowerCase() || !row.draftBlockNumber) throw new NotFoundException("Draft was not found");
+    const canonicalHash = hash.toLowerCase();
+    if (row.transactionHash === canonicalHash) return row;
+    if (row.status !== "PENDING_TRADE") throw new ConflictException("Draft is no longer pending");
+    if (row.submittedTransactionHash && row.submittedTransactionHash !== canonicalHash) throw new ConflictException("Draft is bound to a different transaction");
+    const bound = await this.predictionModel.findOneAndUpdate(
+      { _id: row._id, status: "PENDING_TRADE", $or: [{ submittedTransactionHash: { $exists: false } }, { submittedTransactionHash: canonicalHash }] },
+      { $set: { submittedTransactionHash: canonicalHash } }, { returnDocument: "after" },
+    ).exec();
+    if (!bound) throw new ConflictException("Draft confirmation changed; retry the same transaction");
+    let proof;
+    try {
+      proof = await this.dreamDex.verifyPredictionTrade({ transactionHash: hash, marketId: row.marketId, marketAddress: row.marketAddress, afterBlock: row.draftBlockNumber, notBefore: row.createdAt, sender: row.predictorAddress, direction: row.direction });
     } catch (error) {
-      if (typeof error === "object" && error && "code" in error && error.code === 11_000) {
-        throw new ConflictException({
-          message: "This transaction is already linked to a prediction",
-          code: "TRANSACTION_ALREADY_USED",
-        });
-      }
+      // Only definitive invalid receipts fail a draft. RPC/indexer outages remain
+      // recoverable and must never destroy proof of a pre-expiry forecast.
+      if (error instanceof BadRequestException) await this.predictionModel.updateOne({ _id: row._id, status: "PENDING_TRADE" }, { $set: { status: "FAILED", marketStatus: "dead" } }).exec();
+      throw error;
+    }
+    const cost = await this.dreamDex.entryCost(hash, row.collateralTokenAddress!, row.predictorAddress);
+    const live = await this.dreamDex.assertTradingWindow(row.marketId, row.marketAddress).then(() => true).catch(() => false);
+    try {
+      const updated = await this.predictionModel.findOneAndUpdate(
+        { _id: row._id, status: "PENDING_TRADE", submittedTransactionHash: canonicalHash },
+        { $set: { transactionHash: canonicalHash, entryTx: canonicalHash, orderId: proof.orderId, positionReference: proof.filledQuantity, entryCostBaseUnits: cost, status: "ACTIVE", marketStatus: live ? "live" : "closed" } },
+        { returnDocument: "after", runValidators: true },
+      ).exec();
+      if (updated) return updated;
+      const current = await this.predictionModel.findById(id).exec();
+      if (current?.transactionHash === canonicalHash) return current;
+      throw new ConflictException("Draft confirmation changed");
+    } catch (error) {
+      if (typeof error === "object" && error && "code" in error && error.code === 11000) throw new ConflictException("Transaction already linked to another prediction");
       throw error;
     }
   }
@@ -103,6 +141,19 @@ export class PredictionsService {
       .find({ predictorAddress: walletAddress.toLowerCase() })
       .sort({ createdAt: -1 })
       .exec();
+  }
+
+  async confirmClaim(id: string, walletAddress: string, hash: `0x${string}`): Promise<void> {
+    const prediction = await this.predictionModel.findById(id).exec();
+    if (!prediction || prediction.predictorAddress !== walletAddress.toLowerCase()) throw new NotFoundException("Prediction was not found");
+    if (prediction.status !== "RESOLVED" || prediction.source !== "LIVE" || !prediction.marketAddress || !prediction.positionReference || prediction.entryCostBaseUnits === undefined || prediction.collateralDecimals === undefined) throw new BadRequestException("This record needs verified settlement and entry accounting before claim recording.");
+    if (prediction.claimTransactionHash) {
+      if (prediction.claimTransactionHash === hash.toLowerCase()) return;
+      throw new ConflictException("This prediction already has a recorded claim.");
+    }
+    const pnl = await this.dreamDex.verifyClaim({ hash, marketId: prediction.marketId, marketAddress: prediction.marketAddress, direction: prediction.direction, quantity: prediction.positionReference, cost: prediction.entryCostBaseUnits, decimals: prediction.collateralDecimals, wallet: walletAddress });
+    await this.predictionModel.updateOne({ _id: prediction._id, claimTransactionHash: { $exists: false } }, { $set: { claimTransactionHash: hash.toLowerCase(), realizedPnl: pnl } }).exec();
+    await this.reputation?.recalculate(walletAddress);
   }
 
   async getFeed(viewerAddress?: string): Promise<PredictionFeedItem[]> {
@@ -116,7 +167,7 @@ export class PredictionsService {
 
   async getById(id: string, viewerAddress?: string): Promise<PredictionFeedItem> {
     const prediction = await this.predictionModel.findById(id).exec();
-    if (!prediction) throw new NotFoundException("Prediction was not found");
+    if (!prediction || (prediction.status === "PENDING_TRADE" && prediction.predictorAddress !== viewerAddress?.toLowerCase())) throw new NotFoundException("Prediction was not found");
     const [dto] = await this.secureDtos([prediction], viewerAddress);
     if (!dto) throw new NotFoundException("Prediction was not found");
     return dto;
@@ -165,7 +216,16 @@ export class PredictionsService {
       rows.forEach((row) => unlocked.add(row.prediction.toString()));
     }
 
-    return predictions.map((prediction) => {
+    const windows = new Map<string, Promise<boolean>>();
+    for (const prediction of predictions) {
+      if (prediction.status === "ACTIVE" && prediction.source === "LIVE" && !windows.has(prediction.marketId)) {
+        windows.set(prediction.marketId, this.dreamDex.assertTradingWindow(prediction.marketId, prediction.marketAddress).then(() => true).catch(() => false));
+      }
+    }
+    return Promise.all(predictions.map(async (prediction) => {
+      prediction.marketStatus = prediction.status === "RESOLVED" ? "resolved" :
+        prediction.status === "FAILED" ? "dead" :
+        prediction.source === "LIVE" && await windows.get(prediction.marketId) ? "live" : "closed";
       const predictor = summaries.get(prediction.predictorAddress) ?? {
         walletAddress: prediction.predictorAddress,
         reputationScore: 50,
@@ -181,6 +241,6 @@ export class PredictionsService {
       return canView
         ? toVisiblePredictionDto(prediction, predictor)
         : toGatedPredictionDto(prediction, predictor);
-    });
+    }));
   }
 }

@@ -10,6 +10,11 @@ export type PredictionOutcome = PredictionDirection | "VOID";
 
 @Schema({ timestamps: true })
 export class Prediction {
+  @Prop()
+  draftBlockNumber?: string;
+
+  @Prop({ lowercase: true })
+  submittedTransactionHash?: string;
   @Prop({ type: MongooseSchema.Types.ObjectId, ref: "User", required: true })
   predictor!: Types.ObjectId;
 
@@ -21,6 +26,45 @@ export class Prediction {
 
   @Prop({ required: true, trim: true })
   marketId!: string;
+
+  @Prop({ lowercase: true })
+  marketAddress?: string;
+
+  @Prop({ lowercase: true })
+  poolAddress?: string;
+
+  @Prop()
+  windowSeconds?: number;
+
+  @Prop()
+  expiry?: Date;
+
+  @Prop({ type: String, enum: ["Up", "Down"] })
+  side?: "Up" | "Down";
+
+  @Prop()
+  entryPrice?: number;
+
+  @Prop({ lowercase: true })
+  entryTx?: string;
+
+  @Prop({ type: String, enum: ["live", "closed", "resolved", "dead"] })
+  marketStatus?: "live" | "closed" | "resolved" | "dead";
+
+  @Prop()
+  unrealizedPnl?: string;
+
+  @Prop()
+  settlementPayout?: string;
+
+  @Prop({ lowercase: true })
+  claimTransactionHash?: string;
+
+  @Prop()
+  entryCostBaseUnits?: string;
+
+  @Prop()
+  collateralDecimals?: number;
 
   @Prop({ trim: true })
   venueId?: string;
@@ -103,6 +147,7 @@ PredictionSchema.index({ marketId: 1, status: 1 });
 PredictionSchema.index({ status: 1, marketExpiryAt: 1 });
 PredictionSchema.index({ visibility: 1, status: 1, createdAt: -1 });
 PredictionSchema.index({ source: 1 });
+PredictionSchema.index({ claimTransactionHash: 1 }, { unique: true, partialFilterExpression: { claimTransactionHash: { $type: "string" } } });
 PredictionSchema.index(
   { transactionHash: 1 },
   { unique: true, partialFilterExpression: { transactionHash: { $type: "string" } } },

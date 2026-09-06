@@ -18,6 +18,8 @@ export class LeaderboardService {
       rank: index + 1,
       walletAddress: user.walletAddress,
       ...(user.displayName ? { displayName: user.displayName } : {}),
+      ...(user.avatarUrl ? { avatarUrl: user.avatarUrl } : {}),
+      ...(user.avatarSeed ? { avatarSeed: user.avatarSeed } : {}),
       reputationScore: user.reputationScore,
       resolvedPredictions: user.resolvedPredictions,
       correctPredictions: user.correctPredictions,

@@ -14,6 +14,9 @@ export class User {
   @Prop({ trim: true })
   avatarSeed?: string;
 
+  @Prop({ trim: true })
+  avatarUrl?: string;
+
   @Prop({ required: true, default: false, index: true })
   isDemo!: boolean;
 

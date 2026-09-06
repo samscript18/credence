@@ -6,6 +6,6 @@ import { AppShell } from "./app-shell";
 
 export function AppFrame({ children }: Readonly<{ children: React.ReactNode }>) {
   const pathname = usePathname();
-  if (pathname.startsWith("/dev/")) return children;
+  if (pathname === "/" || pathname.startsWith("/dev/")) return children;
   return <AppShell>{children}</AppShell>;
 }

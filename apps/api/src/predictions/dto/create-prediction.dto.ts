@@ -9,7 +9,7 @@ import {
   Min,
 } from "class-validator";
 
-export class CreatePredictionDto {
+export class CreateDraftDto {
   @Matches(/^0x[a-f\d]{64}$/i)
   marketId!: string;
 
@@ -33,6 +33,9 @@ export class CreatePredictionDto {
   @IsEnum(["PUBLIC", "LOCKED"] as const)
   visibility!: "PUBLIC" | "LOCKED";
 
+}
+
+export class CreatePredictionDto extends CreateDraftDto {
   @IsNumber()
   @Min(0)
   @Max(1)

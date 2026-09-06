@@ -3,10 +3,6 @@
 import type { DreamDexMarketQuote } from "@credence/shared";
 import { ArrowUpRight } from "lucide-react";
 
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { cn } from "@/lib/utils";
-import { MarketProbability } from "./market-probability";
 import { MarketCountdown } from "./market-countdown";
 
 export function MarketCard({
@@ -18,34 +14,82 @@ export function MarketCard({
   selected: boolean;
   onSelect: () => void;
 }) {
+  const upProb = market.probabilities ? Math.round(market.probabilities.yes * 100) : null;
+  const downProb = market.probabilities ? Math.round(market.probabilities.no * 100) : null;
+
   return (
-    <Card className={cn("group p-5 transition-colors hover:border-white/15", selected && "border-lime-300/35 bg-lime-300/[.025]") }>
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex min-w-0 items-center gap-3">
-          <span className="grid size-10 shrink-0 place-items-center rounded-full border border-white/9 bg-white/5 text-xs font-extrabold text-neutral-300">
-            {market.underlying.slice(0, 3).toUpperCase()}
+    <div
+      id={`market-${market.marketId}`}
+      className={`group flex flex-col justify-between rounded-xl border p-5 transition-all duration-200 ${
+        selected
+          ? "border-signal/40 bg-[#16181D]"
+          : "border-white/5 bg-[#0B0C0E] hover:border-white/10"
+      }`}
+    >
+      <div>
+        {/* Header */}
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-2.5">
+            <div className="flex size-9 items-center justify-center rounded-lg border border-white/10 bg-white/[0.03] font-mono text-xs font-semibold text-foreground">
+              {market.underlying.slice(0, 3).toUpperCase()}
+            </div>
+            <div>
+              <p className="font-mono text-[13px] font-medium text-foreground">{market.underlying}</p>
+              <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted">15m contract</p>
+            </div>
+          </div>
+          <span className="inline-flex items-center gap-1 rounded-sm border border-emerald-400/25 bg-emerald-400/[0.07] px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.16em] text-emerald-300">
+            <span className="size-1 rounded-full bg-emerald-300" />
+            {market.indexedStatus}
           </span>
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-neutral-100">{market.title}</p>
-            <p className="mt-1 truncate text-xs text-neutral-600">{market.symbol}</p>
+        </div>
+
+        {/* Title */}
+        <p className="mt-4 min-h-10 text-[13px] leading-snug text-muted" title={market.title}>
+          {market.title}
+        </p>
+
+        {/* Probabilities */}
+        <div className="mt-4 grid grid-cols-2 gap-2 font-mono">
+          <div className="rounded-lg border border-emerald-400/15 bg-emerald-400/[0.03] p-2.5">
+            <div className="flex items-center justify-between text-[10px] text-muted">
+              <span>UP</span>
+              <span className="text-emerald-400">{upProb != null ? `${upProb}%` : "—"}</span>
+            </div>
+          </div>
+          <div className="rounded-lg border border-rose-400/15 bg-rose-400/[0.03] p-2.5">
+            <div className="flex items-center justify-between text-[10px] text-muted">
+              <span>DOWN</span>
+              <span className="text-rose-400">{downProb != null ? `${downProb}%` : "—"}</span>
+            </div>
           </div>
         </div>
-        <span className="shrink-0 rounded-full border border-lime-300/15 bg-lime-300/[.06] px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-lime-300">
-          {market.indexedStatus}
-        </span>
+
+        {/* Probability bar */}
+        {upProb != null && downProb != null && (
+          <div className="mt-2 flex h-1 w-full overflow-hidden rounded-full bg-white/[0.06]">
+            <div className="bg-emerald-400 transition-all duration-300" style={{ width: `${upProb}%` }} />
+            <div className="bg-rose-400 transition-all duration-300" style={{ width: `${downProb}%` }} />
+          </div>
+        )}
       </div>
 
-      <div className="mt-5 grid grid-cols-2 gap-2">
-        <MarketProbability label="UP" value={market.probabilities?.yes ?? null} tone="up" />
-        <MarketProbability label="DOWN" value={market.probabilities?.no ?? null} tone="down" />
+      {/* Footer */}
+      <div className="mt-5 flex items-center justify-between gap-3 border-t border-white/5 pt-3.5">
+        <MarketCountdown expiryAt={market.expiryAt} className="font-mono text-[11px] text-muted" />
+        <button
+          type="button"
+          onClick={onSelect}
+          className={`cursor-pointer inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 font-mono text-xs font-medium transition-all active:scale-[0.98] ${
+            selected
+              ? "bg-signal text-[#04131f] font-semibold"
+              : "border border-white/10 bg-white/[0.03] text-foreground hover:bg-white/[0.07]"
+          }`}
+        >
+          {selected ? "Selected" : "Predict"}
+          <ArrowUpRight className="size-3 text-muted" />
+        </button>
       </div>
-
-      <div className="mt-4 flex items-center justify-between gap-3 border-t border-white/7 pt-4">
-        <MarketCountdown expiryAt={market.expiryAt} className="text-xs text-neutral-500" />
-        <Button variant={selected ? "primary" : "ghost"} className="h-8 px-3 text-xs" onClick={onSelect}>
-          {selected ? "Selected" : "Select market"}<ArrowUpRight className="ml-1.5 size-3.5" />
-        </Button>
-      </div>
-    </Card>
+    </div>
   );
 }

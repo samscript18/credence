@@ -3,7 +3,8 @@ import { Injectable, ServiceUnavailableException } from "@nestjs/common";
 
 import { DreamDexService } from "../dreamdex/dreamdex.service.js";
 
-const MARKET_LIST_TIMEOUT_MS = 12_000;
+// SDK cold discovery includes chain metadata reads; measured ~16s on Shannon.
+const MARKET_LIST_TIMEOUT_MS = 25_000;
 const MARKET_QUOTE_TIMEOUT_MS = 5_000;
 
 function withTimeout<T>(promise: Promise<T>, timeoutMs: number): Promise<T> {

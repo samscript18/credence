@@ -32,10 +32,8 @@ export class BacksService {
       if (!unlock) throw new BadRequestException({ message: "Unlock this prediction before backing it", code: "UNLOCK_REQUIRED" });
     }
 
-    const market = await this.dreamDex.getEventMarket(prediction.marketId);
-    if (!market.tradable || new Date(market.expiryAt).getTime() <= Date.now()) {
-      throw new BadRequestException({ message: "DreamDEX market is no longer tradable", code: "MARKET_EXPIRED" });
-    }
+    // The API independently checks the stored window, not the current symbol.
+    await this.dreamDex.assertTradingWindow(prediction.marketId, prediction.marketAddress);
 
     let proof: Awaited<ReturnType<DreamDexService["verifyPredictionTrade"]>>;
     try {
@@ -52,8 +50,8 @@ export class BacksService {
       });
     }
 
-    const probabilities = await this.dreamDex.getMarketProbabilities(prediction.marketId);
-    const executionProbability = prediction.direction === "UP" ? probabilities.yes : probabilities.no;
+    const probabilities = await this.dreamDex.getMarketProbabilities(prediction.marketId).catch(() => null);
+    const executionProbability = probabilities ? (prediction.direction === "UP" ? probabilities.yes : probabilities.no) : undefined;
     try {
       const record = await this.backModel.create({
         prediction: prediction._id,

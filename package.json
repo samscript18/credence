@@ -17,6 +17,7 @@
     "typecheck": "npm run build --workspace @credence/shared && npm run typecheck --workspace @credence/api && npm run typecheck --workspace @credence/web"
   },
   "devDependencies": {
+    "@playwright/test": "^1.63.0",
     "concurrently": "latest",
     "next": "16.3.4"
   },

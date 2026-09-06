@@ -3,12 +3,12 @@ import { Body, Controller, HttpCode, Param, Post, Req, UseGuards } from "@nestjs
 import { AuthGuard } from "../auth/auth.guard.js";
 import type { AuthenticatedRequest } from "../auth/auth.types.js";
 import { ConfirmUnlockDto } from "./dto/confirm-unlock.dto.js";
-import { UnlocksService } from "./unlocks.service.js";
+import { EscrowUnlocksService } from "./escrow-unlocks.service.js";
 
 @Controller("predictions/:id/unlock")
 @UseGuards(AuthGuard)
 export class UnlocksController {
-  constructor(private readonly unlocks: UnlocksService) {}
+  constructor(private readonly unlocks: EscrowUnlocksService) {}
 
   @Post("prepare")
   @HttpCode(200)

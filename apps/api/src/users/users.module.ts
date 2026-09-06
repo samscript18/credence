@@ -6,6 +6,7 @@ import { PredictionsModule } from "../predictions/predictions.module.js";
 import { User, UserSchema } from "./schemas/user.schema.js";
 import { UsersController } from "./users.controller.js";
 import { UsersService } from "./users.service.js";
+import { AvatarUploadService } from "./avatar-upload.service.js";
 
 @Module({
   imports: [
@@ -14,7 +15,7 @@ import { UsersService } from "./users.service.js";
     MongooseModule.forFeature([{ name: User.name, schema: UserSchema }]),
   ],
   controllers: [UsersController],
-  providers: [UsersService],
+  providers: [UsersService, AvatarUploadService],
   exports: [UsersService],
 })
 export class UsersModule {}

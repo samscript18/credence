@@ -58,7 +58,7 @@ export function toDreamDexProbabilities(
       ? (bestYesBid + bestYesAsk) / 2
       : (bestYesBid ?? bestYesAsk);
 
-  if (yes === null || yes < 0 || yes > 1) {
+  if (yes === null || !Number.isFinite(yes) || yes < 0 || yes > 1) {
     throw new Error(`Event Contract ${marketId} has no valid probability quote`);
   }
 

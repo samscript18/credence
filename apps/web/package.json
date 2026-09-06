@@ -1,43 +1,43 @@
 {
-  "name": "@credence/web",
-  "version": "0.1.0",
-  "private": true,
-  "scripts": {
-    "build": "next build --webpack",
-    "dev": "next dev",
-    "lint": "eslint . --max-warnings=0",
-    "start": "next start",
-    "test": "vitest run --passWithNoTests",
-    "typecheck": "tsc --noEmit"
-  },
-  "dependencies": {
-    "@credence/shared": "*",
-    "@somnia-chain/markets-sdk": "^0.29.0",
-    "@tanstack/react-query": "latest",
-    "@wagmi/connectors": "^8.2.0",
-    "axios": "latest",
-    "class-variance-authority": "latest",
-    "clsx": "latest",
-    "lucide-react": "latest",
-    "next": "latest",
-    "react": "latest",
-    "react-dom": "latest",
-    "tailwind-merge": "latest",
-    "viem": "latest",
-    "wagmi": "latest",
-    "zustand": "latest"
-  },
-  "devDependencies": {
-    "@eslint/js": "^9.39.1",
-    "@tailwindcss/postcss": "latest",
-    "@types/node": "latest",
-    "@types/react": "latest",
-    "@types/react-dom": "latest",
-    "eslint": "^9.39.1",
-    "eslint-config-next": "latest",
-    "tailwindcss": "latest",
-    "typescript": "^6.0.2",
-    "typescript-eslint": "latest",
-    "vitest": "latest"
-  }
+	"name": "@credence/web",
+	"version": "0.1.0",
+	"private": true,
+	"scripts": {
+		"build": "next build --webpack",
+		"dev": "next dev",
+		"lint": "eslint . --max-warnings=0",
+		"start": "next start",
+		"test": "vitest run --passWithNoTests",
+		"typecheck": "tsc --noEmit"
+	},
+	"dependencies": {
+		"@credence/shared": "*",
+		"@somnia-chain/markets-sdk": "^0.29.0",
+		"@tanstack/react-query": "latest",
+		"@wagmi/connectors": "^8.2.0",
+		"axios": "latest",
+		"class-variance-authority": "latest",
+		"clsx": "latest",
+		"lucide-react": "latest",
+		"next": "latest",
+		"react": "latest",
+		"react-dom": "latest",
+		"tailwind-merge": "latest",
+		"viem": "latest",
+		"wagmi": "latest",
+		"zustand": "latest"
+	},
+	"devDependencies": {
+		"@eslint/js": "^9.39.1",
+		"@tailwindcss/postcss": "latest",
+		"@types/node": "latest",
+		"@types/react": "latest",
+		"@types/react-dom": "latest",
+		"eslint": "^9.39.1",
+		"eslint-config-next": "latest",
+		"tailwindcss": "latest",
+		"typescript": "^6.0.2",
+		"typescript-eslint": "latest",
+		"vitest": "latest"
+	}
 }
