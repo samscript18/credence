@@ -24,7 +24,7 @@ export function NetworkSearch() {
   }, [value]);
   useEffect(() => {
     function shortcut(event: KeyboardEvent) {
-      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k") {
+      if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === "k" && input.current?.getClientRects().length) {
         event.preventDefault(); input.current?.focus(); setOpen(true);
       }
     }
@@ -42,7 +42,7 @@ export function NetworkSearch() {
     // Only public identifying fields: never search locked reasoning/direction.
     ...(calls.data ?? []).filter(row => matches(row.marketTitle, row.predictor.displayName, row.predictorAddress)).slice(0, 5).map(row => ({ key: `call:${row.id}`, label: row.marketTitle, kind: "Recent call", href: `/profile/${row.predictorAddress}#prediction-${row.id}` })),
   ] : [];
-  return <div ref={container} className="relative ml-auto w-full max-w-xs" onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false); }} onKeyDown={event => {
+  return <div ref={container} className="relative ml-auto hidden w-full max-w-xs md:block" onBlur={event => { if (!event.currentTarget.contains(event.relatedTarget)) setOpen(false); }} onKeyDown={event => {
     if (event.key === "Escape") { setOpen(false); input.current?.blur(); }
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       const links = Array.from(container.current?.querySelectorAll<HTMLAnchorElement>("li a") ?? []);
