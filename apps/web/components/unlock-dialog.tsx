@@ -169,6 +169,7 @@ export function UnlockDialog({ prediction, onClose }: { prediction: PredictionFe
 							<Button
 								variant="secondary"
 								disabled={busy}
+								className="ml-4!"
 								onClick={() => {
 									setStage("Recovering payment state");
 									void sync(hash)

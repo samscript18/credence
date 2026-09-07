@@ -46,6 +46,7 @@ export function toPredictionDto(prediction: PredictionDocument): CredencePredict
 
 export function toPredictorSummary(user: User): PredictorSummary {
   return {
+    isDemo: user.isDemo === true,
     walletAddress: user.walletAddress,
     ...(user.displayName ? { displayName: user.displayName } : {}),
     ...(user.avatarUrl ? { avatarUrl: user.avatarUrl } : {}),

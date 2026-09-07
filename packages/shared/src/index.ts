@@ -94,6 +94,7 @@ export type CredencePrediction = {
 };
 
 export type PredictorSummary = {
+	isDemo?: boolean;
 	walletAddress: string;
 	displayName?: string;
 	avatarUrl?: string;

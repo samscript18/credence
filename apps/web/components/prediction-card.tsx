@@ -26,6 +26,7 @@ export function PredictionCard({ prediction }: { prediction: PredictionFeedItem 
 	const windowLive = useWindowLive(prediction);
 	const salesOpen = useWindowLive(prediction, MIN_UNLOCK_BUFFER_SECONDS);
 	const name = prediction.predictor.displayName ?? displayAddress(prediction.predictorAddress);
+	const demoLabel = prediction.predictor.isDemo ? "Demo predictor · qualification from seeded history" : null;
 
 	return (
 		<div id={`prediction-${prediction.id}`} className="group relative flex flex-col justify-between rounded-xl border border-white/5 bg-[#0B0C0E] p-5 sm:p-6 transition-colors duration-200 hover:border-white/10">
@@ -37,6 +38,7 @@ export function PredictionCard({ prediction }: { prediction: PredictionFeedItem 
 						<div className="min-w-0">
 							<div className="flex items-center gap-2">
 								<p className="truncate font-mono text-[12px] font-medium text-foreground">{name}</p>
+								{demoLabel && <p className="text-[10px] text-signal">{demoLabel}</p>}
 								{prediction.predictor.verified && <VerifiedBadge />}
 							</div>
 							<div className="mt-1 flex items-center gap-2">

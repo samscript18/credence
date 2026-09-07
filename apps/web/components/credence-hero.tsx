@@ -1,5 +1,6 @@
 "use client";
 
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowDown, ArrowUpRight, ChevronRight, Radio, Shield, Trophy } from "lucide-react";
 import { CredenceLogo } from "./credence-logo";
@@ -130,172 +131,7 @@ export function CredenceHero() {
       </div>
 
       {/* Vestra 3D Interactive Product Perspective */}
-      <div
-        className="group relative -mt-4 px-4 pt-16 pb-16 [perspective:2000px] md:px-0"
-        style={{
-          WebkitMaskImage: "linear-gradient(180deg, transparent, black 5%, black 85%, transparent)",
-          maskImage: "linear-gradient(180deg, transparent, black 5%, black 85%, transparent)",
-        }}
-      >
-        <div className="relative mx-auto max-w-[1300px] overflow-hidden rounded-xl border border-white/10 bg-[#0F1012] product-preview">
-          <div className="pointer-events-none absolute inset-0 z-10 bg-[linear-gradient(to_bottom_right,rgba(255,255,255,0.05)_0%,transparent_40%)]" />
-
-          {/* 3-column app mock */}
-          <div className="grid h-[680px] grid-cols-[220px_340px_1fr] divide-x divide-white/[0.05]">
-            {/* Mock Sidebar */}
-            <div className="flex h-full flex-col bg-[#0F1012] p-4">
-              <div className="flex h-12 items-center gap-2 border-b border-white/[0.05] pb-3">
-                <CredenceLogo className="text-[13px]" />
-                <span className="ml-auto rounded-sm border border-white/10 bg-white/[0.02] px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.16em] text-muted">
-                  Shannon
-                </span>
-              </div>
-              <div className="mt-4 space-y-1">
-                <div className="flex items-center gap-3 rounded-md bg-white/[0.06] px-3 py-2 text-[13px] text-foreground">
-                  <Radio className="size-3.5 text-signal" />
-                  <span>Signals</span>
-                </div>
-                <div className="flex items-center gap-3 rounded-md px-3 py-2 text-[13px] text-muted">
-                  <Trophy className="size-3.5 text-muted" />
-                  <span>Leaderboard</span>
-                </div>
-                <div className="flex items-center gap-3 rounded-md px-3 py-2 text-[13px] text-muted">
-                  <Shield className="size-3.5 text-muted" />
-                  <span>Reputation</span>
-                </div>
-              </div>
-              <div className="mt-auto border-t border-white/[0.05] pt-3">
-                <div className="flex items-center gap-2 font-mono text-[10px] text-muted">
-                  <span className="relative flex h-1.5 w-1.5 rounded-full bg-emerald-400">
-                    <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400 opacity-60" />
-                  </span>
-                  <span>indexer live · Somnia</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Mock Live Signals Feed */}
-            <div className="flex h-full flex-col bg-[#0B0C0E]">
-              <div className="flex h-12 items-center justify-between border-b border-white/[0.05] px-4">
-                <span className="text-[13px] font-medium text-foreground/85">Live network calls</span>
-                <span className="font-mono text-[10px] text-signal">STREAM</span>
-              </div>
-              <ul className="flex-1 overflow-hidden divide-y divide-white/[0.04]">
-                <li className="p-3.5 border-l-2 border-l-signal bg-[#16181D]">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-mono text-[10px] text-signal">SIG-0042</span>
-                    <span className="h-1 w-1 rounded-full bg-muted/60" />
-                    <span className="text-[10px] text-muted">Score: 88</span>
-                  </div>
-                  <p className="text-[12px] font-medium text-foreground">david.somnia · BTC DOWN · 78%</p>
-                  <div className="mt-2 flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1 rounded-sm border border-emerald-400/20 bg-emerald-400/[0.07] px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.16em] text-emerald-300">
-                      LIVE
-                    </span>
-                    <span className="font-mono text-[10px] text-muted/70">DreamDEX: 35%</span>
-                  </div>
-                </li>
-                <li className="p-3.5 hover:bg-white/[0.02]">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-mono text-[10px] text-muted">SIG-0041</span>
-                    <span className="h-1 w-1 rounded-full bg-muted/60" />
-                    <span className="text-[10px] text-muted">Score: 92</span>
-                  </div>
-                  <p className="text-[12px] text-foreground/80">marcus.somnia · ETH UP · 72%</p>
-                  <div className="mt-2 flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1 rounded-sm border border-signal/20 bg-signal/[0.07] px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.16em] text-signal">
-                      RESOLVED
-                    </span>
-                    <span className="font-mono text-[10px] text-up font-medium">+18.4 USDso</span>
-                  </div>
-                </li>
-                <li className="p-3.5 hover:bg-white/[0.02]">
-                  <div className="flex items-center gap-2 mb-1">
-                    <span className="font-mono text-[10px] text-muted">SIG-0040</span>
-                  </div>
-                  <p className="text-[12px] text-foreground/80">nova.somnia · BTC UP · 85%</p>
-                  <div className="mt-2 flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1 rounded-sm border border-white/10 bg-white/[0.03] px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.16em] text-muted">
-                      LOCKED
-                    </span>
-                    <span className="font-mono text-[10px] text-muted">1 tUSDC</span>
-                  </div>
-                </li>
-              </ul>
-            </div>
-
-            {/* Mock Inspector Detail Panel */}
-            <div className="flex h-full flex-col bg-[#0B0C0E] p-6 overflow-y-auto">
-              <div className="flex items-center justify-between border-b border-white/[0.05] pb-4">
-                <div>
-                  <span className="font-mono text-[11px] text-muted">BTC · 15m Event Contract</span>
-                  <h3 className="text-xl font-medium tracking-tight text-foreground mt-1">David&apos;s Signal Analysis</h3>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1 rounded-sm border border-signal/20 bg-signal/[0.08] px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-signal">
-                    Verified Predictor
-                  </span>
-                </div>
-              </div>
-
-              <div className="mt-5 space-y-4 text-[13px] text-foreground/75">
-                <div className="grid grid-cols-3 gap-3">
-                  <div className="rounded-lg border border-white/5 bg-white/[0.02] p-3">
-                    <div className="font-mono text-[9px] uppercase tracking-[0.18em] text-muted">Direction</div>
-                    <div className="mt-1 font-mono text-lg font-semibold text-down">DOWN</div>
-                  </div>
-                  <div className="rounded-lg border border-white/5 bg-white/[0.02] p-3">
-                    <div className="font-mono text-[9px] uppercase tracking-[0.18em] text-muted">Confidence</div>
-                    <div className="mt-1 font-mono text-lg font-semibold text-foreground">78%</div>
-                  </div>
-                  <div className="rounded-lg border border-white/5 bg-white/[0.02] p-3">
-                    <div className="font-mono text-[9px] uppercase tracking-[0.18em] text-muted">Market at Entry</div>
-                    <div className="mt-1 font-mono text-lg font-semibold text-signal">35%</div>
-                  </div>
-                </div>
-
-                {/* Onchain Code / Event Inspection */}
-                <div className="overflow-hidden rounded-lg border border-white/10 bg-[#090A0B]">
-                  <div className="flex items-center justify-between border-b border-white/[0.05] bg-[#131416] px-4 py-2">
-                    <span className="font-mono text-[11px] text-muted">credence/reputation.ts</span>
-                    <span className="font-mono text-[10px] text-muted/70">DreamDEX Event</span>
-                  </div>
-                  <div className="p-4 font-mono text-[11px] leading-5 space-y-1">
-                    <div className="text-muted/70">{"// settle DreamDEX Event Contract outcome"}</div>
-                    <div>
-                      <span className="text-purple-400">const</span> <span className="text-blue-300">result</span> = <span className="text-yellow-300">await</span> dex.<span className="text-yellow-300">settle</span>(<span className="text-foreground/70">marketId</span>);
-                    </div>
-                    <div>
-                      <span className="text-purple-400">await</span> registry.<span className="text-yellow-300">recordPerformance</span>({"{"}
-                    </div>
-                    <div className="pl-4">
-                      predictor: <span className="text-signal">&quot;0x7f2...a19&quot;</span>,
-                    </div>
-                    <div className="pl-4">
-                      accuracyDelta: <span className="text-emerald-400">+1.87</span>,
-                    </div>
-                    <div className="pl-4">
-                      verifiedScore: <span className="text-signal">88.4 / 100</span>
-                    </div>
-                    <div>{"}"});</div>
-                    <div className="text-emerald-400 pt-2">✓ Contract resolved · reputation updated on Somnia</div>
-                  </div>
-                </div>
-
-                <div className="rounded-lg border border-white/5 bg-white/[0.02] p-4 flex items-center justify-between">
-                  <div>
-                    <p className="text-xs font-medium text-foreground">Back this prediction</p>
-                    <p className="text-[11px] text-muted">Execute matching position on DreamDEX</p>
-                  </div>
-                  <span className="cursor-pointer inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3.5 py-1.5 text-xs font-medium text-foreground">
-                    Back Call <ChevronRight className="size-3" />
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+      <InteractiveProductPreview />
 
       {/* Vestra Animated Marquee Ticker */}
       <div
@@ -325,5 +161,233 @@ export function CredenceHero() {
         </div>
       </div>
     </section>
+  );
+}
+
+function InteractiveProductPreview() {
+  const cardRef = useRef<HTMLDivElement>(null);
+  const [style, setStyle] = useState<React.CSSProperties>({});
+  const [glareStyle, setGlareStyle] = useState<React.CSSProperties>({ opacity: 0 });
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    const card = cardRef.current;
+    if (!card) return;
+    const rect = card.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    const centerX = rect.width / 2;
+    const centerY = rect.height / 2;
+
+    // Responsive 3D tilt tracking mouse position
+    const rotX = ((y - centerY) / centerY) * -12;
+    const rotY = ((x - centerX) / centerX) * 14;
+
+    setStyle({
+      transform: `perspective(2000px) rotateX(${rotX.toFixed(2)}deg) rotateY(${rotY.toFixed(2)}deg) rotateZ(0deg) translateY(-8px) scale3d(1.02, 1.02, 1.02)`,
+      transition: "transform 80ms ease-out, box-shadow 120ms ease-out",
+      boxShadow: `0 40px 80px -20px rgba(0, 0, 0, 0.75), 0 0 0 1px rgba(255, 255, 255, 0.12), ${-rotY * 3}px ${rotX * 3}px 140px -20px rgba(155, 220, 255, 0.35)`,
+    });
+
+    const percentX = (x / rect.width) * 100;
+    const percentY = (y / rect.height) * 100;
+
+    setGlareStyle({
+      opacity: 1,
+      background: `radial-gradient(circle at ${percentX.toFixed(1)}% ${percentY.toFixed(1)}%, rgba(155, 220, 255, 0.2) 0%, rgba(255, 255, 255, 0.05) 30%, transparent 65%)`,
+    });
+  };
+
+  const handleMouseEnter = () => {
+    setStyle({
+      transition: "transform 350ms ease-out, box-shadow 350ms ease-out",
+    });
+  };
+
+  const handleMouseLeave = () => {
+    setStyle({
+      transition: "transform 800ms cubic-bezier(0.23, 1, 0.32, 1), box-shadow 800ms ease",
+    });
+    setGlareStyle({ opacity: 0, transition: "opacity 600ms ease" });
+  };
+
+  return (
+    <div
+      className="product-perspective group relative -mt-4 px-4 pt-16 pb-16 md:px-0"
+      style={{
+        WebkitMaskImage: "linear-gradient(180deg, transparent, black 5%, black 85%, transparent)",
+        maskImage: "linear-gradient(180deg, transparent, black 5%, black 85%, transparent)",
+      }}
+    >
+      <div
+        ref={cardRef}
+        onMouseMove={handleMouseMove}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        style={style}
+        className="relative mx-auto max-w-[1300px] overflow-hidden rounded-xl border border-white/10 bg-[#0F1012] product-preview cursor-pointer select-none"
+      >
+        {/* Dynamic Specular Sheen Glare following mouse */}
+        <div
+          className="pointer-events-none absolute inset-0 z-20 transition-opacity duration-300"
+          style={glareStyle}
+        />
+        <div className="pointer-events-none absolute inset-0 z-10 bg-[linear-gradient(to_bottom_right,rgba(255,255,255,0.05)_0%,transparent_40%)]" />
+
+        {/* 3-column app mock */}
+        <div className="grid h-[680px] grid-cols-[220px_340px_1fr] divide-x divide-white/[0.05]">
+          {/* Mock Sidebar */}
+          <div className="flex h-full flex-col bg-[#0F1012] p-4">
+            <div className="flex h-12 items-center gap-2 border-b border-white/[0.05] pb-3">
+              <CredenceLogo className="text-[13px]" />
+              <span className="ml-auto rounded-sm border border-white/10 bg-white/[0.02] px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.16em] text-muted">
+                Shannon
+              </span>
+            </div>
+            <div className="mt-4 space-y-1">
+              <div className="flex items-center gap-3 rounded-md bg-white/[0.06] px-3 py-2 text-[13px] text-foreground">
+                <Radio className="size-3.5 text-signal" />
+                <span>Signals</span>
+              </div>
+              <div className="flex items-center gap-3 rounded-md px-3 py-2 text-[13px] text-muted">
+                <Trophy className="size-3.5 text-muted" />
+                <span>Leaderboard</span>
+              </div>
+              <div className="flex items-center gap-3 rounded-md px-3 py-2 text-[13px] text-muted">
+                <Shield className="size-3.5 text-muted" />
+                <span>Reputation</span>
+              </div>
+            </div>
+            <div className="mt-auto border-t border-white/[0.05] pt-3">
+              <div className="flex items-center gap-2 font-mono text-[10px] text-muted">
+                <span className="relative flex h-1.5 w-1.5 rounded-full bg-emerald-400">
+                  <span className="absolute inset-0 animate-ping rounded-full bg-emerald-400 opacity-60" />
+                </span>
+                <span>indexer live · Somnia</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Mock Live Signals Feed */}
+          <div className="flex h-full flex-col bg-[#0B0C0E]">
+            <div className="flex h-12 items-center justify-between border-b border-white/[0.05] px-4">
+              <span className="text-[13px] font-medium text-foreground/85">Live network calls</span>
+              <span className="font-mono text-[10px] text-signal">STREAM</span>
+            </div>
+            <ul className="flex-1 overflow-hidden divide-y divide-white/[0.04]">
+              <li className="p-3.5 border-l-2 border-l-signal bg-[#16181D]">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-mono text-[10px] text-signal">SIG-0042</span>
+                  <span className="h-1 w-1 rounded-full bg-muted/60" />
+                  <span className="text-[10px] text-muted">Score: 88</span>
+                </div>
+                <p className="text-[12px] font-medium text-foreground">david.somnia · BTC DOWN · 78%</p>
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-sm border border-emerald-400/20 bg-emerald-400/[0.07] px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.16em] text-emerald-300">
+                    LIVE
+                  </span>
+                  <span className="font-mono text-[10px] text-muted/70">DreamDEX: 35%</span>
+                </div>
+              </li>
+              <li className="p-3.5 hover:bg-white/[0.02]">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-mono text-[10px] text-muted">SIG-0041</span>
+                  <span className="h-1 w-1 rounded-full bg-muted/60" />
+                  <span className="text-[10px] text-muted">Score: 92</span>
+                </div>
+                <p className="text-[12px] text-foreground/80">marcus.somnia · ETH UP · 72%</p>
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-sm border border-signal/20 bg-signal/[0.07] px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.16em] text-signal">
+                    RESOLVED
+                  </span>
+                  <span className="font-mono text-[10px] text-up font-medium">+18.4 USDso</span>
+                </div>
+              </li>
+              <li className="p-3.5 hover:bg-white/[0.02]">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="font-mono text-[10px] text-muted">SIG-0040</span>
+                </div>
+                <p className="text-[12px] text-foreground/80">nova.somnia · BTC UP · 85%</p>
+                <div className="mt-2 flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-sm border border-white/10 bg-white/[0.03] px-1.5 py-0.5 font-mono text-[8px] uppercase tracking-[0.16em] text-muted">
+                    LOCKED
+                  </span>
+                  <span className="font-mono text-[10px] text-muted">1 tUSDC</span>
+                </div>
+              </li>
+            </ul>
+          </div>
+
+          {/* Mock Inspector Detail Panel */}
+          <div className="flex h-full flex-col bg-[#0B0C0E] p-6 overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-white/[0.05] pb-4">
+              <div>
+                <span className="font-mono text-[11px] text-muted">BTC · 15m Event Contract</span>
+                <h3 className="text-xl font-medium tracking-tight text-foreground mt-1">David&apos;s Signal Analysis</h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center gap-1 rounded-sm border border-signal/20 bg-signal/[0.08] px-2 py-0.5 font-mono text-[10px] uppercase tracking-[0.14em] text-signal">
+                  Verified Predictor
+                </span>
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-4 text-[13px] text-foreground/75">
+              <div className="grid grid-cols-3 gap-3">
+                <div className="rounded-lg border border-white/5 bg-white/[0.02] p-3">
+                  <div className="font-mono text-[9px] uppercase tracking-[0.18em] text-muted">Direction</div>
+                  <div className="mt-1 font-mono text-lg font-semibold text-down">DOWN</div>
+                </div>
+                <div className="rounded-lg border border-white/5 bg-white/[0.02] p-3">
+                  <div className="font-mono text-[9px] uppercase tracking-[0.18em] text-muted">Confidence</div>
+                  <div className="mt-1 font-mono text-lg font-semibold text-foreground">78%</div>
+                </div>
+                <div className="rounded-lg border border-white/5 bg-white/[0.02] p-3">
+                  <div className="font-mono text-[9px] uppercase tracking-[0.18em] text-muted">Market at Entry</div>
+                  <div className="mt-1 font-mono text-lg font-semibold text-signal">35%</div>
+                </div>
+              </div>
+
+              {/* Onchain Code / Event Inspection */}
+              <div className="overflow-hidden rounded-lg border border-white/10 bg-[#090A0B]">
+                <div className="flex items-center justify-between border-b border-white/[0.05] bg-[#131416] px-4 py-2">
+                  <span className="font-mono text-[11px] text-muted">credence/reputation.ts</span>
+                  <span className="font-mono text-[10px] text-muted/70">DreamDEX Event</span>
+                </div>
+                <div className="p-4 font-mono text-[11px] leading-5 space-y-1">
+                  <div className="text-muted/70">{"// settle DreamDEX Event Contract outcome"}</div>
+                  <div>
+                    <span className="text-purple-400">const</span> <span className="text-blue-300">result</span> = <span className="text-yellow-300">await</span> dex.<span className="text-yellow-300">settle</span>(<span className="text-foreground/70">marketId</span>);
+                  </div>
+                  <div>
+                    <span className="text-purple-400">await</span> registry.<span className="text-yellow-300">recordPerformance</span>({"{"}
+                  </div>
+                  <div className="pl-4">
+                    predictor: <span className="text-signal">&quot;0x7f2...a19&quot;</span>,
+                  </div>
+                  <div className="pl-4">
+                    accuracyDelta: <span className="text-emerald-400">+1.87</span>,
+                  </div>
+                  <div className="pl-4">
+                    verifiedScore: <span className="text-signal">88.4 / 100</span>
+                  </div>
+                  <div>{"}"});</div>
+                  <div className="text-emerald-400 pt-2">✓ Contract resolved · reputation updated on Somnia</div>
+                </div>
+              </div>
+
+              <div className="rounded-lg border border-white/5 bg-white/[0.02] p-4 flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-medium text-foreground">Back this prediction</p>
+                  <p className="text-[11px] text-muted">Execute matching position on DreamDEX</p>
+                </div>
+                <span className="cursor-pointer inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/[0.06] px-3.5 py-1.5 text-xs font-medium text-foreground">
+                  Back Call <ChevronRight className="size-3" />
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

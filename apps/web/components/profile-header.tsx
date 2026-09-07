@@ -60,6 +60,7 @@ export function ProfileHeader({ user }: { user: PredictorProfile }) {
               <div>
                 <div className="flex flex-wrap items-center gap-2.5">
                   <h1 className="text-2xl sm:text-3xl font-semibold tracking-tight text-foreground">{name}</h1>
+                  {user.isDemo && <p className="text-xs text-signal">Demo predictor · qualification from seeded history, not earned live performance.</p>}
                   {user.verified && <VerifiedBadge />}
                   {isOwner && (
                     <button

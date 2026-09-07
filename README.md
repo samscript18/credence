@@ -264,6 +264,20 @@ Backend variables:
 
 ## Demo data and preparation
 
+Nova's controlled Shannon demo wallet has a real locked ETH UP entry on the
+October 19, 2026 window, created through authenticated draft/confirmation endpoints.
+Its display name is `Nova (Demo)`; demo badges disclose seeded qualification.
+The 84 historical forecasts remain `DEMO_SEED`, not real past trades. The new
+entry alone is `LIVE`. This setup affects DEV, not the original source database.
+
+`scripts/create-nova-wallet.mjs` creates the private local signer without printing
+its key. `scripts/prepare-nova-profile.mjs` backs up and atomically moves only
+unlinked historical Nova records to that signer, refusing live/audit references.
+`scripts/publish-nova-locked.mjs` submits one minimum ETH UP demo on a 40–44-day
+Trading window and reuses saved transaction bytes on retry. It is not a recurring
+cron trader. Keep `.local-operations/` private and do not delete its recovery files.
+Do not rerun the general seeder to manage this controlled Nova identity.
+
 Seed deterministic history:
 
 ```bash
@@ -292,17 +306,24 @@ Design-pass progress and the browser verification procedure are recorded in
 - Import the repository and choose **Root Directory: `apps/web`**.
 - Keep **Include source files outside of the Root Directory** enabled so the npm workspace can read `packages/shared`.
 - Framework preset: Next.js.
-- Install command: `cd ../.. && npm ci`
+- Install command: `cd ../.. && npm ci --include=dev --include=optional`
 - Build command: `cd ../.. && npm run build --workspace @credence/shared && npm run build --workspace @credence/web`
 - Set all `NEXT_PUBLIC_*` variables before building; `NEXT_PUBLIC_API_URL` must be the Render API URL.
 
 ### Render API
 
+For `nest: not found`, include dev dependencies during the build install—the Nest
+CLI is a build tool. The root `.npmrc` includes dev/optional dependencies even with
+`NODE_ENV=production`. For Vercel Linux builds, the root optional dependencies pin
+the matching Tailwind Oxide and Lightning CSS Linux x64 bindings. Redeploy with
+the updated lockfile and clear the failed build cache once. These repository
+changes do not edit hosted environment variables or trigger deployment themselves.
+
 Because the API consumes `packages/shared`, leave **Root Directory blank** (repository root).
 
 - Service type: Web Service
 - Runtime: Node
-- Build command: `npm ci && npm run build --workspace @credence/shared && npm run build --workspace @credence/api`
+- Build command: `npm ci --include=dev --include=optional && npm run build --workspace @credence/shared && npm run build --workspace @credence/api`
 - Start command: `npm run start --workspace @credence/api`
 - Health check path: `/health`
 

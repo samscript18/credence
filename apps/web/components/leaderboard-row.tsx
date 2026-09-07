@@ -38,6 +38,7 @@ export function LeaderboardRow({ entry }: { entry: LeaderboardEntry }) {
           <p className="truncate font-mono text-[12px] font-medium text-foreground">
             {entry.displayName ?? `${entry.walletAddress.slice(0, 6)}…${entry.walletAddress.slice(-4)}`}
           </p>
+          {entry.isDemo && <p className="text-[10px] text-signal">Demo · seeded qualification</p>}
         </div>
         {entry.verified && <VerifiedBadge />}
       </div>
