@@ -26,7 +26,7 @@ export function PredictionCard({ prediction }: { prediction: PredictionFeedItem 
 	const windowLive = useWindowLive(prediction);
 	const salesOpen = useWindowLive(prediction, MIN_UNLOCK_BUFFER_SECONDS);
 	const name = prediction.predictor.displayName ?? displayAddress(prediction.predictorAddress);
-	const demoLabel = prediction.predictor.isDemo ? "Demo predictor · qualification from seeded history" : null;
+	const demoLabel = prediction.predictor.isDemo ? "" : null;
 
 	return (
 		<div id={`prediction-${prediction.id}`} className="group relative flex flex-col justify-between rounded-xl border border-white/5 bg-[#0B0C0E] p-5 sm:p-6 transition-colors duration-200 hover:border-white/10">
