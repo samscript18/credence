@@ -208,7 +208,7 @@ export function FeedScreen() {
           </div>
         )}
 
-        <div className="p-5 sm:p-6 grid items-start gap-5 lg:grid-cols-2">
+        <div className="p-5 sm:p-6 grid auto-rows-fr items-stretch gap-5 lg:grid-cols-2">
           {feed.isLoading && (
             <>
               <PredictionCardSkeleton />

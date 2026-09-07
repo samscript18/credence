@@ -95,7 +95,10 @@ export function BackPredictionDialog({ prediction, onClose }: { prediction: Visi
 			const confirmed = await backsService.create(prediction.id, trade.transactionHash);
 			setRecord(confirmed);
 			setPendingHash(null);
-			await queryClient.invalidateQueries({ queryKey: marketKeys.all });
+			await Promise.all([
+				queryClient.invalidateQueries({ queryKey: marketKeys.all }),
+				queryClient.invalidateQueries({ queryKey: ["profile"] }),
+			]);
 			setStage("SUCCESS");
 		} catch (caught) {
 			setError(apiErrorMessage(caught));
@@ -111,6 +114,7 @@ export function BackPredictionDialog({ prediction, onClose }: { prediction: Visi
 			const confirmed = await backsService.create(prediction.id, pendingHash);
 			setRecord(confirmed);
 			setPendingHash(null);
+			await queryClient.invalidateQueries({ queryKey: ["profile"] });
 			setStage("SUCCESS");
 		} catch (caught) {
 			setError(apiErrorMessage(caught));
@@ -126,6 +130,7 @@ export function BackPredictionDialog({ prediction, onClose }: { prediction: Visi
 			const confirmed = await backsService.recoverLatest(prediction.id);
 			setRecord(confirmed);
 			setPendingHash(null);
+			await queryClient.invalidateQueries({ queryKey: ["profile"] });
 			setStage("SUCCESS");
 		} catch (caught) {
 			setError(apiErrorMessage(caught));

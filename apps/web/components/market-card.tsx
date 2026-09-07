@@ -16,6 +16,7 @@ export function MarketCard({
 }) {
   const upProb = market.probabilities ? Math.round(market.probabilities.yes * 100) : null;
   const downProb = market.probabilities ? Math.round(market.probabilities.no * 100) : null;
+  const probabilitiesAvailable = upProb !== null && downProb !== null;
 
   return (
     <div
@@ -80,7 +81,8 @@ export function MarketCard({
         <button
           type="button"
           onClick={onSelect}
-          className={`cursor-pointer inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 font-mono text-xs font-medium transition-all active:scale-[0.98] ${
+          disabled={!probabilitiesAvailable}
+          className={`inline-flex items-center gap-1.5 rounded-full px-4 py-1.5 font-mono text-xs font-medium transition-all active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-40 ${
             selected
               ? "bg-signal text-[#04131f] font-semibold"
               : "border border-white/10 bg-white/[0.03] text-foreground hover:bg-white/[0.07]"

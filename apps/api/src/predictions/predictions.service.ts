@@ -15,6 +15,7 @@ import {
 } from "./prediction.dto.js";
 import { Prediction, type PredictionDocument } from "./schemas/prediction.schema.js";
 import { ReputationService } from "../reputation/reputation.service.js";
+import { BackedPrediction } from "../backs/schemas/backed-prediction.schema.js";
 
 @Injectable()
 export class PredictionsService {
@@ -23,6 +24,8 @@ export class PredictionsService {
     @InjectModel(User.name) private readonly userModel: Model<User>,
     @InjectModel(PredictionUnlock.name)
     private readonly unlockModel: Model<PredictionUnlock>,
+    @InjectModel(BackedPrediction.name)
+    private readonly backModel: Model<BackedPrediction>,
     private readonly dreamDex: DreamDexService,
     private readonly leaderboard: LeaderboardService,
     private readonly reputation?: ReputationService,
@@ -177,11 +180,26 @@ export class PredictionsService {
     predictorAddress: string,
     viewerAddress?: string,
   ): Promise<{ active: PredictionFeedItem[]; resolved: PredictionFeedItem[] }> {
+    const canonicalPredictorAddress = predictorAddress.toLowerCase();
+    const canonicalViewerAddress = viewerAddress?.toLowerCase();
+    const ownBackedPredictionIds = canonicalViewerAddress === canonicalPredictorAddress
+      ? await this.backModel
+          .find({ backerAddress: canonicalViewerAddress, status: "CONFIRMED" })
+          .distinct("prediction")
+          .exec()
+      : [];
     const predictions = await this.predictionModel
       .find({ predictorAddress: predictorAddress.toLowerCase(), status: { $in: ["ACTIVE", "RESOLVED"] } })
       .sort({ createdAt: -1 })
       .exec();
-    const secured = await this.secureDtos(predictions, viewerAddress);
+    const backedActivePredictions = ownBackedPredictionIds.length
+      ? await this.predictionModel
+          .find({ _id: { $in: ownBackedPredictionIds }, status: "ACTIVE" })
+          .exec()
+      : [];
+    const predictionById = new Map(predictions.map((prediction) => [prediction._id.toString(), prediction]));
+    backedActivePredictions.forEach((prediction) => predictionById.set(prediction._id.toString(), prediction));
+    const secured = await this.secureDtos([...predictionById.values()], viewerAddress);
     return {
       active: secured.filter((prediction) => prediction.status === "ACTIVE"),
       resolved: secured.filter((prediction) => prediction.status === "RESOLVED"),

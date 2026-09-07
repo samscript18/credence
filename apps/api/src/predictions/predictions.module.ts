@@ -2,6 +2,7 @@ import { Module } from "@nestjs/common";
 import { MongooseModule } from "@nestjs/mongoose";
 
 import { AuthModule } from "../auth/auth.module.js";
+import { BackedPrediction, BackedPredictionSchema } from "../backs/schemas/backed-prediction.schema.js";
 import { User, UserSchema } from "../users/schemas/user.schema.js";
 import { PredictionUnlock, PredictionUnlockSchema } from "../unlocks/schemas/prediction-unlock.schema.js";
 import { PredictionsController } from "./predictions.controller.js";
@@ -15,6 +16,7 @@ import { Prediction, PredictionSchema } from "./schemas/prediction.schema.js";
       { name: Prediction.name, schema: PredictionSchema },
       { name: User.name, schema: UserSchema },
       { name: PredictionUnlock.name, schema: PredictionUnlockSchema },
+      { name: BackedPrediction.name, schema: BackedPredictionSchema },
     ]),
   ],
   controllers: [PredictionsController],

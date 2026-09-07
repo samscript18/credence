@@ -29,7 +29,7 @@ export function PredictionCard({ prediction }: { prediction: PredictionFeedItem 
 	const demoLabel = prediction.predictor.isDemo ? "" : null;
 
 	return (
-		<div id={`prediction-${prediction.id}`} className="group relative flex flex-col justify-between rounded-xl border border-white/5 bg-[#0B0C0E] p-5 sm:p-6 transition-colors duration-200 hover:border-white/10">
+		<div id={`prediction-${prediction.id}`} className="group relative flex h-full flex-col justify-between rounded-xl border border-white/5 bg-[#0B0C0E] p-5 sm:p-6 transition-colors duration-200 hover:border-white/10">
 			<div>
 				{/* Card Header */}
 				<div className="flex items-start justify-between gap-3">

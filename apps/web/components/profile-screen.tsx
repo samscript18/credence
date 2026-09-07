@@ -67,7 +67,7 @@ export function ProfileScreen({ address }: { address: string }) {
           <span className="font-mono text-[11px] text-signal">Live in market</span>
         </div>
 
-        <div className="grid items-start gap-4 lg:grid-cols-2">
+        <div className="grid auto-rows-fr items-stretch gap-4 lg:grid-cols-2">
           {user.activePredictions.length ? (
             user.activePredictions.map((prediction) => (
               <PredictionCard key={prediction.id} prediction={prediction} />
