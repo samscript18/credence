@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 
+import "@rainbow-me/rainbowkit/styles.css";
 import "./globals.css";
 import { AppFrame } from "@/components/app-frame";
 import { Providers } from "./providers";

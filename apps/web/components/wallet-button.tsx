@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { useProfile } from "@/hooks/use-profile";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAccount, useConnect, useDisconnect, useSignMessage, useSwitchChain } from "wagmi";
+import { useAccount, useDisconnect, useSignMessage, useSwitchChain } from "wagmi";
 import { somniaShannon } from "@somnia-chain/markets-sdk/chains";
 
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,7 @@ import { authService } from "@/services/auth.service";
 import { apiErrorMessage } from "@/services/api";
 import { Toast } from "./ui/toast";
 import { PredictorAvatar } from "./predictor-avatar";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 
 function shortAddress(value: string): string {
   return `${value.slice(0, 6)}…${value.slice(-4)}`;
@@ -23,7 +24,7 @@ export function WalletButton() {
   const [copied, setCopied] = useState(false);
   const [menuError, setMenuError] = useState<string | null>(null);
   const { address, chainId, isConnected } = useAccount();
-  const { connectors, connect, isPending, error: connectError } = useConnect();
+  const { openConnectModal } = useConnectModal();
   const { disconnect } = useDisconnect();
   const { signMessageAsync } = useSignMessage();
   const { switchChain, isPending: isSwitching, error: switchError } = useSwitchChain();
@@ -60,14 +61,13 @@ export function WalletButton() {
       <>
         <button
           type="button"
-          disabled={isPending || !connectors[0]}
-          onClick={() => connectors[0] && connect({ connector: connectors[0] })}
+          onClick={openConnectModal}
+          disabled={!openConnectModal}
           className="cursor-pointer inline-flex items-center gap-2 rounded-full bg-foreground px-4 py-2 text-sm font-medium text-black transition-all duration-200 ease-out hover:bg-foreground/90 active:scale-[0.98] disabled:opacity-40"
         >
           <Wallet className="size-3.5" />
-          {isPending ? "Connecting…" : "Connect wallet"}
+          Connect wallet
         </button>
-        {connectError ? <Toast message={apiErrorMessage(connectError)} /> : null}
       </>
     );
   }

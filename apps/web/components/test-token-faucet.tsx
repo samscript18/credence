@@ -2,12 +2,13 @@
 
 import { somniaShannon } from "@somnia-chain/markets-sdk/chains";
 import { useRef, useState } from "react";
-import { useAccount, useConnect, useSwitchChain, useWalletClient } from "wagmi";
+import { useAccount, useSwitchChain, useWalletClient } from "wagmi";
+import { useConnectModal } from "@rainbow-me/rainbowkit";
 import { dreamDex } from "@/lib/dreamdex/adapter";
 
 export function DreamDexFaucet() {
   const { address, chainId, isConnected } = useAccount();
-  const { connectors, connect, error: connectError, isPending: connecting } = useConnect();
+  const { openConnectModal } = useConnectModal();
   const { switchChain, error: switchError, isPending: switching } = useSwitchChain();
   const { data: walletClient } = useWalletClient();
   const [pending, setPending] = useState(false);
@@ -46,12 +47,9 @@ export function DreamDexFaucet() {
         </div>
         {address && <p className="break-all font-mono text-xs text-muted">Connected wallet: {address}</p>}
         {!isConnected ? (
-          <div className="space-y-2">
-            {connectors.map(connector => <button key={connector.uid} type="button" className={buttonClass} disabled={connecting} onClick={() => connect({ connector })}>
-              {connecting ? "Connecting…" : `Connect ${connector.name}`}
-            </button>)}
-            {!connectors.length && <p className="text-sm text-muted">Open this page in a wallet-enabled browser to connect.</p>}
-          </div>
+          <button type="button" className={buttonClass} disabled={!openConnectModal} onClick={openConnectModal}>
+            Connect wallet
+          </button>
         ) : !rightChain ? (
           <button type="button" className={buttonClass} disabled={switching || pending} onClick={() => switchChain({ chainId: somniaShannon.id })}>
             {switching ? "Switching…" : "Switch to Somnia Shannon"}
@@ -61,7 +59,7 @@ export function DreamDexFaucet() {
             {pending ? "Waiting for wallet / confirmation…" : "Faucet 10 tUSDC"}
           </button>
         )}
-        {(error || connectError || switchError) && <p role="alert" className="break-words text-sm text-rose-300">{error ?? connectError?.message ?? switchError?.message}</p>}
+        {(error || switchError) && <p role="alert" className="break-words text-sm text-rose-300">{error ?? switchError?.message}</p>}
         {receipt && <div role="status" className="rounded-xl border border-signal/20 bg-signal/5 p-4 text-sm">
           <p>10 tUSDC received.</p>
           <p className="mt-1 break-all font-mono text-xs text-muted">Wallet: {receipt.wallet}</p>

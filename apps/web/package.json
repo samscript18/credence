@@ -12,9 +12,14 @@
 	},
 	"dependencies": {
 		"@credence/shared": "*",
+		"@rainbow-me/rainbowkit": "^2.2.11",
 		"@somnia-chain/markets-sdk": "^0.29.0",
 		"@tanstack/react-query": "latest",
-		"@wagmi/connectors": "^8.2.0",
+		"@wagmi/connectors": "^6.2.0",
+		"@x402/core": "^2.25.0",
+		"@x402/evm": "^2.25.0",
+		"@x402/extensions": "^2.25.0",
+		"@x402/svm": "^2.25.0",
 		"axios": "latest",
 		"class-variance-authority": "latest",
 		"clsx": "latest",
@@ -24,7 +29,7 @@
 		"react-dom": "latest",
 		"tailwind-merge": "latest",
 		"viem": "latest",
-		"wagmi": "latest",
+		"wagmi": "^2.19.5",
 		"zustand": "latest"
 	},
 	"devDependencies": {
@@ -35,6 +40,7 @@
 		"@types/react-dom": "latest",
 		"eslint": "^9.39.1",
 		"eslint-config-next": "latest",
+		"qr": "0.5.0",
 		"tailwindcss": "latest",
 		"typescript": "^6.0.2",
 		"typescript-eslint": "latest",

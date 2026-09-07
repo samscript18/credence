@@ -219,6 +219,22 @@ npm run build
 
 ## Environment variables
 
+Wallet connection uses RainbowKit with Credence's dark/light-blue theme. Without
+`NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID`, the modal lists browser-injected wallets
+(extensions must be enabled for the current site). To enable mobile/QR wallet
+connections, create a WalletConnect/Reown project and set its public project ID
+in the frontend environment, allow the local and production origins in that
+project, then rebuild/redeploy the frontend. Never use a wallet private key as
+the project ID. Credence's existing wallet-signature sign-in is unchanged.
+For local development, this public project ID can be set in the repository-root
+`.env.local`; the web config reads only this key, not backend secrets. Host/app
+environment settings take precedence. Restart `npm run dev` after changing it.
+Select **Connect wallet → WalletConnect** to open the QR connection flow.
+The root npm override pins `qr` to `0.5.0`: RainbowKit's `cuer` renderer requests
+a borderless matrix (`border: 0`), which newer encoders reject. Keep this pin
+until the renderer supports newer encoders; `wallet-qr.test.ts` covers generation
+and SVG rendering with a synthetic WalletConnect URI.
+
 The user-facing `/faucet` page offers 10 test tUSDC, wallet connection and Shannon
 network switching. `/dev/dreamdex` redirects there; diagnostic market data and
 standalone test-trade controls are no longer exposed. The faucet remains testnet
