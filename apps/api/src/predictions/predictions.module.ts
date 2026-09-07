@@ -10,17 +10,17 @@ import { PredictionsService } from "./predictions.service.js";
 import { Prediction, PredictionSchema } from "./schemas/prediction.schema.js";
 
 @Module({
-  imports: [
-    AuthModule,
-    MongooseModule.forFeature([
-      { name: Prediction.name, schema: PredictionSchema },
-      { name: User.name, schema: UserSchema },
-      { name: PredictionUnlock.name, schema: PredictionUnlockSchema },
-      { name: BackedPrediction.name, schema: BackedPredictionSchema },
-    ]),
-  ],
-  controllers: [PredictionsController],
-  providers: [PredictionsService],
-  exports: [PredictionsService],
+	imports: [
+		AuthModule,
+		MongooseModule.forFeature([
+			{ name: Prediction.name, schema: PredictionSchema },
+			{ name: User.name, schema: UserSchema },
+			{ name: PredictionUnlock.name, schema: PredictionUnlockSchema },
+			{ name: BackedPrediction.name, schema: BackedPredictionSchema },
+		]),
+	],
+	controllers: [PredictionsController],
+	providers: [PredictionsService],
+	exports: [PredictionsService],
 })
 export class PredictionsModule {}

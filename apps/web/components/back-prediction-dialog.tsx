@@ -95,10 +95,7 @@ export function BackPredictionDialog({ prediction, onClose }: { prediction: Visi
 			const confirmed = await backsService.create(prediction.id, trade.transactionHash);
 			setRecord(confirmed);
 			setPendingHash(null);
-			await Promise.all([
-				queryClient.invalidateQueries({ queryKey: marketKeys.all }),
-				queryClient.invalidateQueries({ queryKey: ["profile"] }),
-			]);
+			await Promise.all([queryClient.invalidateQueries({ queryKey: marketKeys.all }), queryClient.invalidateQueries({ queryKey: ["profile"] })]);
 			setStage("SUCCESS");
 		} catch (caught) {
 			setError(apiErrorMessage(caught));
