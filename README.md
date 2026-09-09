@@ -58,9 +58,11 @@ reasoning and visibility preferences.
 
 ### 3. Publish a proven call
 
-The connected wallet signs and completes the DreamDEX order first. Credence
-then verifies the sender, market, pool, side, quantity, and filled order before
-publishing the prediction.
+Credence first stores an immutable, server-timestamped draft for the exact live
+DreamDEX window. The connected wallet then signs the trade. After confirmation,
+the API verifies the sender, market, side, positive fill, and transaction hash
+against that same draft before publishing it. A retry links the saved receipt;
+it never intentionally places a second trade.
 
 ### 4. Build a reputation
 
@@ -141,10 +143,12 @@ Next.js web app (apps/web)
         | Axios + React Query
         v
 NestJS API (apps/api) -------- MongoDB
-        |
-        | official SDK + viem
-        v
-DreamDEX Event Contracts on Somnia Shannon
+        |                         |
+        | official SDK + viem     | gated insight audit state
+        v                         v
+DreamDEX Event Contracts     InsightEscrow
+        \_________________________/
+                Somnia Shannon
 ```
 
 - DreamDEX owns markets, orders, positions, finalization, and redemption.
@@ -154,6 +158,25 @@ DreamDEX Event Contracts on Somnia Shannon
   state.
 - Market IDs, pool addresses, order fills, and settlement state come from the
   official DreamDEX integration rather than hardcoded market assumptions.
+
+## Technical documentation
+
+The README is the product-level entry point. Detailed, implementation-grounded
+documentation lives in [`docs/`](docs/README.md):
+
+- [System architecture](docs/ARCHITECTURE.md) — trust boundaries, components,
+  data ownership, and dependency direction
+- [Prediction lifecycle](docs/PREDICTION_LIFECYCLE.md) — draft, trade,
+  confirmation, settlement, claim, unlock, refund, and retry state machines
+- [API reference](docs/API_REFERENCE.md) — routes, authentication, envelopes,
+  validation, and redaction behavior
+- [Security model](docs/SECURITY.md) — assets, threats, controls, assumptions,
+  and key-management rules
+- [Operations runbook](docs/OPERATIONS.md) — local setup, deployment, escrow,
+  worker operation, database migration, and rollback guidance
+- [Troubleshooting](docs/TROUBLESHOOTING.md) — common wallet, indexer, build,
+  Cloudinary, escrow, and record-linking failures
+- [Contributing](CONTRIBUTING.md) — scoped change and verification workflow
 
 ## DreamDEX integration
 
