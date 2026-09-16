@@ -14,6 +14,11 @@ export function validateEnvironment(input: Record<string, unknown>): Environment
 	if (nodeEnvironment === "production" && !environment[mongoKey]) {
 		throw new Error(`${mongoKey} is required in production`);
 	}
+	if (environment.ENABLE_AUTO_CLAIM === "true") {
+		if (!/^https:\/\//.test(environment.KEEPERHUB_API_URL ?? "")) throw new Error("KEEPERHUB_API_URL must be HTTPS when Auto-Claim is enabled");
+		if (!/^kh_/.test(environment.KEEPERHUB_API_KEY ?? "")) throw new Error("KEEPERHUB_API_KEY is required when Auto-Claim is enabled");
+		if (!/^[a-f\d]{64}$/i.test(environment.AUTO_CLAIM_ENCRYPTION_KEY ?? "")) throw new Error("AUTO_CLAIM_ENCRYPTION_KEY must be 64 hexadecimal characters when Auto-Claim is enabled");
+	}
 
 	return {
 		...environment,

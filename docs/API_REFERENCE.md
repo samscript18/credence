@@ -124,6 +124,23 @@ this route to enumerate a pending draft.
 Records a claim only after verifying the receipt belongs to the predictor and
 the exact LIVE, resolved position. Requires complete entry/settlement accounting.
 
+### `POST /predictions/:id/auto-claim/prepare` · authenticated
+
+Returns the exact DreamDEX EIP-712 authorization fields and the outcome-specific
+ERC-6909 allowance required for this prediction. It does not enable Auto-Claim
+or submit a transaction.
+
+### `POST /predictions/:id/auto-claim` · authenticated
+
+Accepts the signed authorization after the exact allowance is confirmed
+onchain. The API independently verifies the signature, owner, market, side,
+amount, routing fields, deadline, module, outcome ID, and current allowance.
+
+### `DELETE /predictions/:id/auto-claim` · authenticated
+
+Disables a ready authorization before submission. It refuses once KeeperHub
+submission or transaction verification is in progress.
+
 ## Insight unlocks
 
 ### `POST /predictions/:id/unlock/prepare` · authenticated

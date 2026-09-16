@@ -1,4 +1,4 @@
-import type { ApiResponse, CredencePrediction, DreamDexDirection, PredictionFeedItem } from "@credence/shared";
+import type { ApiResponse, AutoClaimAuthorizationInput, AutoClaimPreparation, CredencePrediction, DreamDexDirection, PredictionFeedItem } from "@credence/shared";
 
 import { api } from "./api";
 
@@ -21,6 +21,16 @@ export const predictionsService = {
   },
   async confirmClaim(id: string, transactionHash: string): Promise<void> {
     await api.post(`/predictions/${encodeURIComponent(id)}/claim`, { transactionHash });
+  },
+  async prepareAutoClaim(id: string): Promise<AutoClaimPreparation> {
+    const response = await api.post<ApiResponse<AutoClaimPreparation>>(`/predictions/${encodeURIComponent(id)}/auto-claim/prepare`);
+    return response.data.data;
+  },
+  async enableAutoClaim(id: string, input: AutoClaimAuthorizationInput): Promise<void> {
+    await api.post(`/predictions/${encodeURIComponent(id)}/auto-claim`, input);
+  },
+  async disableAutoClaim(id: string): Promise<void> {
+    await api.delete(`/predictions/${encodeURIComponent(id)}/auto-claim`);
   },
   async create(input: CreatePredictionInput): Promise<CredencePrediction> {
     // Receipt, chain status and fill-indexing checks may outlast the generic

@@ -60,6 +60,24 @@ export class Prediction {
   @Prop({ lowercase: true })
   claimTransactionHash?: string;
 
+  @Prop({ required: true, default: false })
+  autoClaimEnabled?: boolean;
+
+  @Prop({ type: String, enum: ["OFF", "READY", "WATCHING", "ELIGIBLE", "EXECUTING", "VERIFIED", "REFUSED", "FAILED", "STALE", "EXPIRED", "INVALID"] })
+  autoClaimStatus?: "OFF" | "READY" | "WATCHING" | "ELIGIBLE" | "EXECUTING" | "VERIFIED" | "REFUSED" | "FAILED" | "STALE" | "EXPIRED" | "INVALID";
+
+  @Prop()
+  autoClaimReason?: string;
+
+  @Prop()
+  keeperhubExecutionId?: string;
+
+  @Prop()
+  autoClaimVerifiedAt?: Date;
+
+  @Prop()
+  autoClaimRecovered?: string;
+
   @Prop()
   entryCostBaseUnits?: string;
 

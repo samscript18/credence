@@ -10,6 +10,7 @@ should be corrected in the same change.
 | --- | --- | --- |
 | Evaluator or new contributor | [Architecture](ARCHITECTURE.md) | What runs where, who owns each fact, and what is trusted? |
 | Frontend/API engineer | [Prediction lifecycle](PREDICTION_LIFECYCLE.md) | Which transitions are legal and how are retries made safe? |
+| Auto-Claim engineer | [DreamDEX Auto-Claim](AUTO_CLAIM.md) | How are exact authorizations, KeeperHub execution, and post-state proofs handled? |
 | API consumer | [API reference](API_REFERENCE.md) | Which endpoints exist and which data is authenticated or redacted? |
 | Security reviewer | [Security model](SECURITY.md) | What is protected, what is assumed, and where are the remaining risks? |
 | Operator | [Operations runbook](OPERATIONS.md) | How is Credence configured, deployed, monitored, and recovered? |
@@ -26,6 +27,7 @@ should be corrected in the same change.
 | Prediction rules and DTO redaction | `apps/api/src/predictions/` |
 | DreamDEX discovery and verification | `apps/api/src/dreamdex/` |
 | Resolution and accounting | `apps/api/src/settlement/`, `apps/api/src/reputation/` |
+| KeeperHub Auto-Claim | `apps/api/src/auto-claim/`, `apps/web/components/auto-claim-control.tsx` |
 | Insight access and refunds | `apps/api/src/unlocks/`, `contracts/src/InsightEscrow.sol` |
 | Operator scripts | `scripts/` |
 

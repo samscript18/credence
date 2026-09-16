@@ -62,6 +62,12 @@ export type DreamDexMarketQuote = DreamDexMarket & {
 export type CredencePrediction = {
 	positionReference?: string;
 	claimTransactionHash?: string;
+	autoClaimEnabled?: boolean;
+	autoClaimStatus?: "OFF" | "READY" | "WATCHING" | "ELIGIBLE" | "EXECUTING" | "VERIFIED" | "REFUSED" | "FAILED" | "STALE" | "EXPIRED" | "INVALID";
+	autoClaimReason?: string;
+	keeperhubExecutionId?: string;
+	autoClaimVerifiedAt?: string;
+	autoClaimRecovered?: string;
 	marketAddress?: string;
 	poolAddress?: string;
 	windowSeconds?: number;
@@ -91,6 +97,28 @@ export type CredencePrediction = {
 	isCorrect?: boolean;
 	realizedPnl?: string;
 	createdAt: string;
+};
+
+export type AutoClaimPreparation = {
+	chainId: number;
+	owner: string;
+	module: string;
+	marketId: string;
+	marketAddress: string;
+	outcomeToken: string;
+	outcomeId: string;
+	outcomeIdx: 0 | 1;
+	amount: string;
+	nonce: string;
+	deadline: string;
+	operatorId: number;
+	venueId: string;
+	approvalRequired: boolean;
+	approvalAmount: string;
+};
+
+export type AutoClaimAuthorizationInput = Omit<AutoClaimPreparation, "chainId" | "owner" | "marketAddress" | "outcomeToken" | "outcomeId" | "approvalRequired" | "approvalAmount"> & {
+	signature: string;
 };
 
 export type PredictorSummary = {

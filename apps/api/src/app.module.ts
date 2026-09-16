@@ -21,6 +21,7 @@ import { UnlocksModule } from "./unlocks/unlocks.module.js";
 import { User, UserSchema } from "./users/schemas/user.schema.js";
 import { UsersModule } from "./users/users.module.js";
 import { SettlementModule } from "./settlement/settlement.module.js";
+import { AutoClaimModule } from "./auto-claim/auto-claim.module.js";
 
 @Module({
 	imports: [
@@ -52,6 +53,7 @@ import { SettlementModule } from "./settlement/settlement.module.js";
 		UnlocksModule,
 		BacksModule,
 		SettlementModule,
+		AutoClaimModule,
 	],
 	controllers: [AppController],
 })

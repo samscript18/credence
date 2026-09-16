@@ -168,6 +168,8 @@ documentation lives in [`docs/`](docs/README.md):
   data ownership, and dependency direction
 - [Prediction lifecycle](docs/PREDICTION_LIFECYCLE.md) — draft, trade,
   confirmation, settlement, claim, unlock, refund, and retry state machines
+- [DreamDEX Auto-Claim](docs/AUTO_CLAIM.md) — signed redemption authorization,
+  KeeperHub execution, idempotency, and post-state verification
 - [API reference](docs/API_REFERENCE.md) — routes, authentication, envelopes,
   validation, and redaction behavior
 - [Security model](docs/SECURITY.md) — assets, threats, controls, assumptions,

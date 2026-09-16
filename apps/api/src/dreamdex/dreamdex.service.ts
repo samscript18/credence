@@ -6,6 +6,8 @@ import type {
 import {
   SOMNIA_TESTNET_ADDRESSES,
   SomniaMarkets,
+  binaryModuleWriteAbi,
+  erc6909Abi,
   isBinaryMarket,
   type BinaryMarket,
   type UnifiedMarket,
@@ -13,8 +15,9 @@ import {
 import { somniaShannon } from "@somnia-chain/markets-sdk/chains";
 import { BadRequestException, Injectable, NotFoundException, ServiceUnavailableException } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { createPublicClient, decodeFunctionData, formatUnits, http, parseAbi } from "viem";
+import { createPublicClient, decodeFunctionData, erc20Abi, formatUnits, http, parseAbi, type Address, type Hex } from "viem";
 import { netTokenReceived } from "./pnl.js";
+import { assertRelayedClaimCalldata, assertRelayedClaimEconomics } from "./claim-proof.js";
 import { historicalPoolAbi, receiptTradeProof } from "./receipt-proof.js";
 
 import { DREAMDEX_INDEXER_URL, DREAMDEX_WS_RPC_URL } from "./dreamdex.constants.js";
@@ -30,6 +33,23 @@ type VerifiableOrder = {
   side: string | null | undefined;
   isBid: boolean;
   filledQuantity: string;
+};
+
+export type RedemptionSnapshot = {
+  chainId: number;
+  module: Address;
+  marketAddress: Address;
+  outcomeToken: Address;
+  outcomeId: bigint;
+  collateral: Address;
+  finalized: boolean;
+  resolved: boolean;
+  voided: boolean;
+  payoutNumerators: readonly bigint[];
+  balance: bigint;
+  collateralBalance: bigint;
+  operatorApproved: boolean;
+  outcomeAllowance: bigint;
 };
 
 export function isMatchingFilledPredictionOrder(
@@ -87,7 +107,7 @@ export class DreamDexService {
     return { unrealizedPnl: formatUnits(payout - BigInt(input.cost), input.decimals), settlementPayout: formatUnits(payout, input.decimals) };
   }
 
-  async verifyClaim(input: { hash: `0x${string}`; marketId: string; marketAddress: string; direction: "UP" | "DOWN"; quantity: string; cost: string; decimals: number; wallet: string }): Promise<string> {
+  async verifyManualClaim(input: { hash: `0x${string}`; marketId: string; marketAddress: string; direction: "UP" | "DOWN"; quantity: string; cost: string; decimals: number; wallet: string }): Promise<string> {
     const client = this.rpc();
     const [state, receipt, tx] = await Promise.all([
       this.getExchange().client.getMarketOnchain(input.marketId as `0x${string}`),
@@ -99,6 +119,59 @@ export class DreamDexService {
     const payout = netTokenReceived(receipt.logs, state.collateral, input.wallet);
     if (payout < 0n) throw new Error("Unexpected claim outflow");
     return formatUnits(payout - BigInt(input.cost), input.decimals);
+  }
+
+  async redemptionSnapshot(marketId: Hex, owner: Address, outcomeIdx: 0 | 1): Promise<RedemptionSnapshot> {
+    const client = this.rpc();
+    const state = await this.getExchange().client.getMarketOnchain(marketId);
+    const module = SOMNIA_TESTNET_ADDRESSES.binaryModule;
+    if (!module) throw new Error("DreamDEX binary module is not configured");
+    const outcomeId = outcomeIdx === 0 ? state.yesId : state.noId;
+    const [chainId, payoutNumerators, balance, collateralBalance, operatorApproved, outcomeAllowance] = await Promise.all([
+      client.getChainId(),
+      client.readContract({ address: state.marketAddress, abi: parseAbi(["function payoutNumerators() view returns (uint256[])"]), functionName: "payoutNumerators" }),
+      client.readContract({ address: state.outcomeToken, abi: erc6909Abi, functionName: "balanceOf", args: [owner, outcomeId] }),
+      client.readContract({ address: state.collateral, abi: erc20Abi, functionName: "balanceOf", args: [owner] }),
+      client.readContract({ address: state.outcomeToken, abi: erc6909Abi, functionName: "isOperator", args: [owner, module] }),
+      client.readContract({ address: state.outcomeToken, abi: erc6909Abi, functionName: "allowance", args: [owner, module, outcomeId] }),
+    ]);
+    return { chainId, module, marketAddress: state.marketAddress, outcomeToken: state.outcomeToken, outcomeId, collateral: state.collateral, finalized: state.finalized, resolved: state.isResolved, voided: state.isVoided, payoutNumerators, balance, collateralBalance, operatorApproved, outcomeAllowance };
+  }
+
+  async assertRedeemAuthorization(input: {
+    module: Address; owner: Address; nonce: bigint; deadline: bigint; signature: Hex;
+    operatorId: number; venueId: Hex; marketId: Hex; outcomeIdx: 0 | 1; amount: bigint;
+  }): Promise<void> {
+    await this.rpc().simulateContract({
+      address: input.module,
+      abi: binaryModuleWriteAbi,
+      functionName: "redeemFor",
+      args: [input.owner, input.nonce, input.deadline, input.signature, input.operatorId, input.venueId, input.marketId, input.outcomeIdx, input.amount],
+    });
+  }
+
+  async verifyAutoClaim(input: {
+    hash: Hex; marketId: Hex; marketAddress: Address; owner: Address; module: Address;
+    outcomeIdx: 0 | 1; outcomeId: bigint; amount: bigint; nonce: bigint; deadline: bigint;
+    operatorId: number; venueId: Hex; signature: Hex; outcomeToken: Address; collateral: Address;
+    outcomeBefore: bigint; collateralBefore: bigint; cost: bigint; decimals: number;
+  }): Promise<{ pnl: string; recovered: bigint; outcomeAfter: bigint; collateralAfter: bigint }> {
+    const client = this.rpc();
+    const [receipt, tx, state] = await Promise.all([
+      client.getTransactionReceipt({ hash: input.hash }),
+      client.getTransaction({ hash: input.hash }),
+      this.getExchange().client.getMarketOnchain(input.marketId),
+    ]);
+    if (receipt.status !== "success" || tx.to?.toLowerCase() !== input.module.toLowerCase() || state.marketAddress.toLowerCase() !== input.marketAddress.toLowerCase() || state.outcomeToken.toLowerCase() !== input.outcomeToken.toLowerCase() || state.collateral.toLowerCase() !== input.collateral.toLowerCase()) throw new Error("Relayed claim receipt or market binding mismatch");
+    assertRelayedClaimCalldata(tx.input, input);
+    const recovered = netTokenReceived(receipt.logs, input.collateral, input.owner);
+    const executorReceived = netTokenReceived(receipt.logs, input.collateral, tx.from);
+    const [outcomeAfter, collateralAfter] = await Promise.all([
+      client.readContract({ address: input.outcomeToken, abi: erc6909Abi, functionName: "balanceOf", args: [input.owner, input.outcomeId], blockNumber: receipt.blockNumber }),
+      client.readContract({ address: input.collateral, abi: erc20Abi, functionName: "balanceOf", args: [input.owner], blockNumber: receipt.blockNumber }),
+    ]);
+    assertRelayedClaimEconomics({ ownerRecovered: recovered, executorRecovered: executorReceived, outcomeBefore: input.outcomeBefore, outcomeAfter, collateralBefore: input.collateralBefore, collateralAfter, amount: input.amount });
+    return { pnl: formatUnits(recovered - input.cost, input.decimals), recovered, outcomeAfter, collateralAfter };
   }
 
   async assertTradingWindow(marketId: string, marketAddress?: string): Promise<void> {

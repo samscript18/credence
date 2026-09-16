@@ -14,6 +14,7 @@ import { ReputationBadge, VerifiedBadge } from "./reputation-badge";
 import { StatusChip } from "./status-chip";
 import { UnlockDialog } from "./unlock-dialog";
 import { useWindowLive } from "@/hooks/use-window-live";
+import { AutoClaimControl } from "./auto-claim-control";
 
 function displayAddress(address: string): string {
 	return `${address.slice(0, 6)}…${address.slice(-4)}`;
@@ -136,6 +137,8 @@ export function PredictionCard({ prediction }: { prediction: PredictionFeedItem 
 									View verified trade on Somnia <ExternalLink className="size-3" />
 								</a>
 							)}
+
+							{address?.toLowerCase() === prediction.predictorAddress && <AutoClaimControl prediction={prediction} />}
 
 							{windowLive && address?.toLowerCase() !== prediction.predictorAddress && (
 								<button

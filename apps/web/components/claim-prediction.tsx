@@ -9,6 +9,7 @@ import { predictionsService } from "@/services/predictions.service";
 import { apiErrorMessage } from "@/services/api";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "./ui/button";
+import { AutoClaimControl } from "./auto-claim-control";
 
 export function ClaimPrediction({ prediction }: { prediction: VisiblePrediction }) {
 	const { address, chainId } = useAccount();
@@ -23,6 +24,7 @@ export function ClaimPrediction({ prediction }: { prediction: VisiblePrediction 
 	const owner = address?.toLowerCase() === prediction.predictorAddress;
 	const payoutKnown = prediction.settlementPayout !== undefined;
 	const zeroPayout = payoutKnown && /^0(?:\.0+)?$/.test(prediction.settlementPayout!);
+	const autoPending = prediction.autoClaimStatus === "EXECUTING";
 	async function claim() {
 		setError("");
 		setBusy(true);
@@ -51,6 +53,7 @@ export function ClaimPrediction({ prediction }: { prediction: VisiblePrediction 
 	}
 	return (
 		<div className="mt-4 space-y-3 border-t border-white/10 pt-4">
+			<AutoClaimControl prediction={prediction} />
 			<p>
 				Settled P&amp;L (estimated, before redemption fees): {prediction.unrealizedPnl ?? "Unavailable"} {prediction.collateralSymbol}
 			</p>
@@ -69,7 +72,7 @@ export function ClaimPrediction({ prediction }: { prediction: VisiblePrediction 
 						(chainId !== somniaShannon.id ? (
 							<Button onClick={() => switchChain({ chainId: somniaShannon.id })}>Switch to Somnia Shannon</Button>
 						) : (
-							<Button disabled={busy} onClick={() => void claim()}>
+							<Button disabled={busy || autoPending} onClick={() => void claim()}>
 								{busy ? "Confirming claim…" : hash ? "Verify existing claim" : "Claim on DreamDEX"}
 							</Button>
 						))}
@@ -88,6 +91,7 @@ export function ClaimPrediction({ prediction }: { prediction: VisiblePrediction 
 					View claim transaction
 				</a>
 			)}
+			{prediction.autoClaimStatus === "VERIFIED" && <div className="space-y-1 text-xs"><p>Auto-claimed by KeeperHub</p><p>Recovered: {prediction.autoClaimRecovered ?? "verified"} {prediction.collateralSymbol}</p><p>Owner: {prediction.predictorAddress}</p><p>KeeperHub execution: {prediction.keeperhubExecutionId}</p><p>Verified: {prediction.autoClaimVerifiedAt}</p></div>}
 			{error && (
 				<p role="alert" className="text-down">
 					{error}

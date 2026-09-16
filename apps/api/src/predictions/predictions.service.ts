@@ -170,7 +170,7 @@ export class PredictionsService {
 			if (prediction.claimTransactionHash === hash.toLowerCase()) return;
 			throw new ConflictException("This prediction already has a recorded claim.");
 		}
-		const pnl = await this.dreamDex.verifyClaim({
+		const pnl = await this.dreamDex.verifyManualClaim({
 			hash,
 			marketId: prediction.marketId,
 			marketAddress: prediction.marketAddress,
@@ -180,7 +180,19 @@ export class PredictionsService {
 			decimals: prediction.collateralDecimals,
 			wallet: walletAddress,
 		});
-		await this.predictionModel.updateOne({ _id: prediction._id, claimTransactionHash: { $exists: false } }, { $set: { claimTransactionHash: hash.toLowerCase(), realizedPnl: pnl } }).exec();
+		await this.recordVerifiedClaim(prediction._id.toString(), hash, pnl, walletAddress);
+	}
+
+	/** Shared terminal accounting for independently verified manual redeem and KeeperHub redeemFor proofs. */
+	async recordVerifiedClaim(id: string, hash: `0x${string}`, pnl: string, walletAddress: string, autoClaim?: { executionId: string; verifiedAt: Date; recovered: string; reason: string }): Promise<void> {
+		const result = await this.predictionModel.updateOne(
+			{ _id: id, $or: [{ claimTransactionHash: { $exists: false } }, { claimTransactionHash: hash.toLowerCase() }] },
+			{ $set: {
+				claimTransactionHash: hash.toLowerCase(), realizedPnl: pnl,
+				...(autoClaim ? { autoClaimEnabled: true, autoClaimStatus: "VERIFIED", autoClaimReason: autoClaim.reason, keeperhubExecutionId: autoClaim.executionId, autoClaimVerifiedAt: autoClaim.verifiedAt, autoClaimRecovered: autoClaim.recovered } : {}),
+			} },
+		).exec();
+		if (!result.matchedCount) throw new ConflictException("This prediction already has a different recorded claim.");
 		await this.reputation?.recalculate(walletAddress);
 	}
 
