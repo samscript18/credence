@@ -31,7 +31,7 @@ Credence therefore requests the narrower outcome-specific allowance. It also acc
 
 Set `ENABLE_AUTO_CLAIM=true` only with:
 
-- `KEEPERHUB_API_URL`: HTTPS KeeperHub deployment URL.
+- `KEEPERHUB_API_URL`: HTTPS KeeperHub deployment URL, or HTTP on `localhost`, `127.0.0.1`, or `[::1]` for local development.
 - `KEEPERHUB_API_KEY`: organization API key allowed to use direct contract calls.
 - `AUTO_CLAIM_ENCRYPTION_KEY`: 32 random bytes encoded as 64 hexadecimal characters.
 - `AUTO_CLAIM_AUTH_TTL_SECONDS`: signature lifetime, between one hour and 90 days.
