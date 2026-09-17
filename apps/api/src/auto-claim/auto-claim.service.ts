@@ -37,12 +37,12 @@ export class AutoClaimService {
     return this.config.get<string>("AUTO_CLAIM_ENCRYPTION_KEY", "");
   }
 
-  private assertEnabled(): void {
-    if (this.config.get<string>("ENABLE_AUTO_CLAIM") !== "true") throw new ServiceUnavailableException("Auto-Claim is not configured on this Credence deployment.");
+  private assertSetupConfigured(): void {
+    if (!/^[a-f\d]{64}$/i.test(this.encryptionKey())) throw new ServiceUnavailableException("Auto-Claim authorization storage is not configured on this Credence deployment.");
   }
 
   async prepare(predictionId: string, wallet: string) {
-    this.assertEnabled();
+    this.assertSetupConfigured();
     const prediction = await this.ownedPrediction(predictionId, wallet);
     const module = SOMNIA_TESTNET_ADDRESSES.binaryModule;
     if (!module || !prediction.marketAddress || !prediction.positionReference) throw new BadRequestException("This prediction cannot be authorized for Auto-Claim.");
@@ -65,7 +65,7 @@ export class AutoClaimService {
   }
 
   async enable(predictionId: string, wallet: string, input: EnableAutoClaimDto) {
-    this.assertEnabled();
+    this.assertSetupConfigured();
     const prediction = await this.ownedPrediction(predictionId, wallet);
     if (!prediction.marketAddress || !prediction.positionReference) throw new BadRequestException("This prediction cannot be authorized for Auto-Claim.");
     if (prediction.claimTransactionHash) throw new ConflictException("This prediction is already claimed.");
@@ -92,6 +92,13 @@ export class AutoClaimService {
       signature: input.signature as Hex,
     });
     if (recovered.toLowerCase() !== wallet.toLowerCase()) throw new BadRequestException({ message: "RedeemAuthorization signature is invalid.", code: "AUTO_CLAIM_SIGNATURE_INVALID" });
+    // eth_call validates the exact signed authorization, including the owner's
+    // nonce and current token approval, before sensitive data is persisted.
+    try {
+      await this.dreamDex.assertRedeemAuthorization({ module, owner: wallet as Address, nonce: BigInt(input.nonce), deadline, signature: input.signature as Hex, operatorId: input.operatorId, venueId: input.venueId as Hex, marketId: input.marketId as Hex, outcomeIdx: input.outcomeIdx, amount });
+    } catch {
+      throw new BadRequestException({ message: "DreamDEX rejected this redemption authorization. Prepare and sign a fresh one.", code: "AUTO_CLAIM_AUTHORIZATION_INVALID" });
+    }
     const encrypted = encryptSignature(input.signature, this.encryptionKey());
     try {
       const authorization = await this.authorizations.findOneAndUpdate(
