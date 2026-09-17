@@ -27,6 +27,17 @@ The deployed Shannon contracts were tested on an isolated Anvil fork at market `
 
 Credence therefore requests the narrower outcome-specific allowance. It also accepts a pre-existing global operator grant when reading legacy owner state, because the deployed module accepts either permission form.
 
+## Local Shannon E2E
+
+A local Credence worker submitted one authorized `redeemFor` through KeeperHub Direct Contract Call on Somnia Shannon. Credence independently verified the receipt and owner payout; the executor received no collateral.
+
+- Prediction: `6aab9aa2e331e954813914b8`
+- KeeperHub execution: `9m45szijwukq6ua8oxg6b`
+- Shannon transaction: `0x5bf4ec934fb613e7cde312ed7686614ba1a379207234c6eab3cad0f0e6b52000`
+- Outcome units: 1,000,000 → 0
+- Owner tUSDC: 46.596749 → 47.596749
+- Final Credence state: `VERIFIED`
+
 ## Configuration
 
 Set `ENABLE_AUTO_CLAIM=true` only with:

@@ -30,7 +30,16 @@ export function AutoClaimControl({ prediction }: { prediction: VisiblePrediction
   const [prepared, setPrepared] = useState<AutoClaimPreparation | null>(null);
   const [step, setStep] = useState<SetupStep>("idle");
 
-  if (prediction.source !== "LIVE" || address?.toLowerCase() !== prediction.predictorAddress || prediction.claimTransactionHash) return null;
+  if (prediction.source !== "LIVE" || address?.toLowerCase() !== prediction.predictorAddress) return null;
+  if (prediction.claimTransactionHash && prediction.autoClaimStatus === "VERIFIED") {
+    return (
+      <div className="space-y-1 rounded-lg border border-signal/15 bg-signal/[0.025] p-3">
+        <p className="text-xs font-medium text-foreground">Auto-claimed by KeeperHub</p>
+        <p className="text-[10px] text-muted">Verified</p>
+      </div>
+    );
+  }
+  if (prediction.claimTransactionHash) return null;
   const pending = prediction.autoClaimStatus === "EXECUTING";
 
   function assertOwner(expected?: AutoClaimPreparation) {

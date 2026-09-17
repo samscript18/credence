@@ -87,11 +87,29 @@ export function ClaimPrediction({ prediction }: { prediction: VisiblePrediction 
 				</>
 			)}
 			{(hash || prediction.claimTransactionHash) && (
-				<a className="block break-all text-signal" target="_blank" rel="noreferrer" href={`${somniaShannon.blockExplorers.default.url}/tx/${hash || prediction.claimTransactionHash}`}>
-					View claim transaction
-				</a>
+				<p className="break-all text-xs">
+					Shannon transaction:{" "}
+					<a className="text-signal" target="_blank" rel="noreferrer" href={`${somniaShannon.blockExplorers.default.url}/tx/${hash || prediction.claimTransactionHash}`}>
+						{hash || prediction.claimTransactionHash}
+					</a>
+				</p>
 			)}
-			{prediction.autoClaimStatus === "VERIFIED" && <div className="space-y-1 text-xs"><p>Auto-claimed by KeeperHub</p><p>Recovered: {prediction.autoClaimRecovered ?? "verified"} {prediction.collateralSymbol}</p><p>Owner: {prediction.predictorAddress}</p><p>KeeperHub execution: {prediction.keeperhubExecutionId}</p><p>Verified: {prediction.autoClaimVerifiedAt}</p></div>}
+			{prediction.autoClaimStatus === "VERIFIED" && (
+				<div className="space-y-1 text-xs">
+					<p>Auto-claimed by KeeperHub</p>
+					<p>Recovered: {prediction.autoClaimRecovered ?? "verified"} {prediction.collateralSymbol}</p>
+					<p>Owner: {prediction.predictorAddress}</p>
+					<p>KeeperHub execution: {prediction.keeperhubExecutionId}</p>
+					{prediction.autoClaimVerifiedAt && (
+						<p>
+							Verified:{" "}
+							<time dateTime={prediction.autoClaimVerifiedAt}>
+								{new Date(prediction.autoClaimVerifiedAt).toLocaleString()}
+							</time>
+						</p>
+					)}
+				</div>
+			)}
 			{error && (
 				<p role="alert" className="text-down">
 					{error}

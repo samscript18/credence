@@ -33,6 +33,9 @@ export function PredictionHistoryRow({ prediction }: { prediction: VisiblePredic
                 {prediction.direction}
               </span>
             </span>
+            {prediction.autoClaimStatus === "VERIFIED" && (
+              <span className="font-mono text-[9px] uppercase tracking-[0.16em] text-signal/80">Auto-claimed</span>
+            )}
           </div>
 
           <div className="flex items-center gap-4 font-mono text-xs">
