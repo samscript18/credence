@@ -4,6 +4,7 @@ import type { VisiblePrediction } from "@credence/shared";
 import { CircleCheck, CircleX, ExternalLink, Minus } from "lucide-react";
 import { somniaShannon } from "@somnia-chain/markets-sdk/chains";
 import { ClaimPrediction } from "./claim-prediction";
+import { isKeeperHubVerifiedAutoClaim } from "@/lib/auto-claim-preference";
 
 export function PredictionHistoryRow({ prediction }: { prediction: VisiblePrediction }) {
   const voided = prediction.finalOutcome === "VOID";
@@ -33,7 +34,7 @@ export function PredictionHistoryRow({ prediction }: { prediction: VisiblePredic
                 {prediction.direction}
               </span>
             </span>
-            {prediction.autoClaimStatus === "VERIFIED" && (
+            {isKeeperHubVerifiedAutoClaim(prediction) && (
               <span className="font-mono text-[9px] uppercase tracking-[0.16em] text-signal/80">Auto-claimed</span>
             )}
           </div>

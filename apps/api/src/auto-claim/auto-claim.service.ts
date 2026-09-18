@@ -92,12 +92,17 @@ export class AutoClaimService {
       signature: input.signature as Hex,
     });
     if (recovered.toLowerCase() !== wallet.toLowerCase()) throw new BadRequestException({ message: "RedeemAuthorization signature is invalid.", code: "AUTO_CLAIM_SIGNATURE_INVALID" });
-    // eth_call validates the exact signed authorization, including the owner's
-    // nonce and current token approval, before sensitive data is persisted.
-    try {
-      await this.dreamDex.assertRedeemAuthorization({ module, owner: wallet as Address, nonce: BigInt(input.nonce), deadline, signature: input.signature as Hex, operatorId: input.operatorId, venueId: input.venueId as Hex, marketId: input.marketId as Hex, outcomeIdx: input.outcomeIdx, amount });
-    } catch {
-      throw new BadRequestException({ message: "DreamDEX rejected this redemption authorization. Prepare and sign a fresh one.", code: "AUTO_CLAIM_AUTHORIZATION_INVALID" });
+    // `redeemFor` is itself a settlement operation, so it correctly reverts
+    // before an ACTIVE market finalizes. The recovered EIP-712 signer and exact
+    // allowance above are sufficient to retain an active position's authorization.
+    // The existing worker still simulates this exact call after settlement and
+    // immediately before KeeperHub submission.
+    if (prediction.status === "RESOLVED") {
+      try {
+        await this.dreamDex.assertRedeemAuthorization({ module, owner: wallet as Address, nonce: BigInt(input.nonce), deadline, signature: input.signature as Hex, operatorId: input.operatorId, venueId: input.venueId as Hex, marketId: input.marketId as Hex, outcomeIdx: input.outcomeIdx, amount });
+      } catch {
+        throw new BadRequestException({ message: "DreamDEX rejected this redemption authorization. Prepare and sign a fresh one.", code: "AUTO_CLAIM_AUTHORIZATION_INVALID" });
+      }
     }
     const encrypted = encryptSignature(input.signature, this.encryptionKey());
     try {

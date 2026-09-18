@@ -138,6 +138,7 @@ export type UpdateProfileInput = {
 	displayName?: string;
 	avatarUrl?: string;
 	avatarSeed?: string;
+	autoClaimPreference?: boolean;
 };
 
 export type VisiblePrediction = CredencePrediction & {
@@ -172,6 +173,7 @@ export type PredictorProfile = PredictorSummary & {
 	realizedPnl: string;
 	activePredictions: PredictionFeedItem[];
 	resolvedHistory: VisiblePrediction[];
+	autoClaimPreference?: boolean;
 };
 
 export type LeaderboardEntry = PredictorSummary & {

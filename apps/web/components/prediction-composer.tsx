@@ -2,7 +2,7 @@
 
 import { ModalShell } from "./modal-shell";
 
-import type { DreamDexDirection, DreamDexMarketQuote } from "@credence/shared";
+import type { CredencePrediction, DreamDexDirection, DreamDexMarketQuote } from "@credence/shared";
 import { CheckCircle2, ExternalLink, X } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRef, useState } from "react";
@@ -10,11 +10,13 @@ import { useAccount, useSwitchChain, useWalletClient } from "wagmi";
 import { somniaShannon } from "@somnia-chain/markets-sdk/chains";
 
 import { TransactionStepper } from "./transaction-stepper";
+import { AutoClaimControl } from "./auto-claim-control";
 import { useAuth } from "@/hooks/use-auth";
 import { useProfile } from "@/hooks/use-profile";
 import { marketKeys } from "@/hooks/use-markets";
 import { myPredictionsKey } from "@/hooks/use-predictions";
 import { dreamDex } from "@/lib/dreamdex/adapter";
+import { shouldAutoStartSetup } from "@/lib/auto-claim-preference";
 import { apiErrorMessage } from "@/services/api";
 import { predictionsService, type CreatePredictionInput } from "@/services/predictions.service";
 import { publishOnce } from "@/lib/publish-once";
@@ -39,6 +41,7 @@ export function PredictionComposer({ market, onClose }: { market: DreamDexMarket
   const [error, setError] = useState<string | null>(null);
   const [transactionHash, setTransactionHash] = useState<string | null>(null);
   const [predictionId, setPredictionId] = useState<string | null>(null);
+  const [createdPrediction, setCreatedPrediction] = useState<CredencePrediction | null>(null);
   const [pending, setPending] = useState<{ wallet: string; input: CreatePredictionInput } | null>(null);
   const submitting = useRef(false);
   const { address, chainId } = useAccount();
@@ -55,6 +58,7 @@ export function PredictionComposer({ market, onClose }: { market: DreamDexMarket
     submitting.current = true;
     setError(null);
     setPredictionId(null);
+    setCreatedPrediction(null);
     try {
       setStage("VALIDATING");
       if (!address || !walletClient) throw new Error("Connect your wallet first.");
@@ -124,6 +128,7 @@ export function PredictionComposer({ market, onClose }: { market: DreamDexMarket
         },
       });
       setPredictionId(prediction.id);
+      setCreatedPrediction(prediction);
       setStage("SUCCESS");
       // Keep the receipt/payload for idempotent reopening of this same window.
       await Promise.all([
@@ -176,6 +181,12 @@ export function PredictionComposer({ market, onClose }: { market: DreamDexMarket
                 <p className="mx-auto max-w-full truncate rounded-md border border-white/5 bg-white/[0.02] px-3 py-2 font-mono text-xs text-muted">
                   Record ID: {predictionId}
                 </p>
+              )}
+
+              {createdPrediction && shouldAutoStartSetup(creatorProfile.data?.autoClaimPreference, createdPrediction) && (
+                <div className="mx-auto max-w-md text-left">
+                  <AutoClaimControl prediction={createdPrediction} autoStart />
+                </div>
               )}
 
               {transactionHash && (

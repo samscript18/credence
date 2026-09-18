@@ -1,4 +1,4 @@
-import { IsOptional, IsString, Matches, MaxLength } from "class-validator";
+import { IsBoolean, IsOptional, IsString, Matches, MaxLength } from "class-validator";
 
 export class UpdateProfileDto {
   @IsOptional()
@@ -16,4 +16,8 @@ export class UpdateProfileDto {
   @IsString()
   @MaxLength(100)
   avatarSeed?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  autoClaimPreference?: boolean;
 }

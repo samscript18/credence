@@ -14,8 +14,8 @@ const marketId = "0x000000000000000000000000000000000000000000000000000000000001
 const marketAddress = "0xb9a3aa613b6770a2b7ba5fb2d04719a8afa98a4e";
 const venueId = "0x679795a0195a1b76cdebb7c51d74e058aee92919b8c3389af86ef24535e8a28c";
 
-function setup() {
-  const prediction = { _id: "candidate", predictorAddress: owner, source: "LIVE", status: "RESOLVED", marketId, marketAddress, direction: "UP", positionReference: "3000000", venueId };
+function setup(status: "ACTIVE" | "RESOLVED" = "RESOLVED") {
+  const prediction = { _id: "candidate", predictorAddress: owner, source: "LIVE", status, marketId, marketAddress, direction: "UP", positionReference: "3000000", venueId };
   const dreamDex = { redemptionSnapshot: vi.fn().mockResolvedValue({
     chainId: 50312, marketAddress, outcomeToken: "0xB52c5934113Af5c0Bb20eb3C72290C8215f755b9",
     outcomeId: 4077975235123937390429559742566565423657578758518772568739672292858368n,
@@ -73,5 +73,23 @@ describe("per-prediction setup with the worker disabled", () => {
     expect(predictionModel.updateOne).toHaveBeenCalled();
     await service.poll();
     expect(keeperHub.submit).not.toHaveBeenCalled();
+  });
+
+  it("stores an active prediction authorization without simulating a pre-settlement redemption", async () => {
+    recovery.recoverTypedDataAddress.mockResolvedValueOnce(owner);
+    const { service, dreamDex, authorizations } = setup("ACTIVE");
+    const prepared = await service.prepare("candidate", owner);
+    dreamDex.redemptionSnapshot.mockResolvedValueOnce({
+      chainId: 50312, marketAddress, outcomeToken: "0xB52c5934113Af5c0Bb20eb3C72290C8215f755b9",
+      outcomeId: 4077975235123937390429559742566565423657578758518772568739672292858368n,
+      balance: 3000000n, operatorApproved: false, outcomeAllowance: 3000000n,
+    });
+    await service.enable("candidate", owner, {
+      module: prepared.module, marketId: prepared.marketId, outcomeIdx: 0, amount: prepared.amount,
+      nonce: prepared.nonce, deadline: prepared.deadline, operatorId: prepared.operatorId,
+      venueId: prepared.venueId, signature: `0x${"22".repeat(65)}`,
+    });
+    expect(dreamDex.assertRedeemAuthorization).not.toHaveBeenCalled();
+    expect(authorizations.findOneAndUpdate).toHaveBeenCalled();
   });
 });

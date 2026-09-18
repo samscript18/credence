@@ -10,6 +10,7 @@ import { apiErrorMessage } from "@/services/api";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "./ui/button";
 import { AutoClaimControl } from "./auto-claim-control";
+import { isAutoClaimReady, isKeeperHubVerifiedAutoClaim } from "@/lib/auto-claim-preference";
 
 export function ClaimPrediction({ prediction }: { prediction: VisiblePrediction }) {
 	const { address, chainId } = useAccount();
@@ -25,6 +26,7 @@ export function ClaimPrediction({ prediction }: { prediction: VisiblePrediction 
 	const payoutKnown = prediction.settlementPayout !== undefined;
 	const zeroPayout = payoutKnown && /^0(?:\.0+)?$/.test(prediction.settlementPayout!);
 	const autoPending = prediction.autoClaimStatus === "EXECUTING";
+	const autoClaimReady = isAutoClaimReady(prediction);
 	async function claim() {
 		setError("");
 		setBusy(true);
@@ -60,7 +62,7 @@ export function ClaimPrediction({ prediction }: { prediction: VisiblePrediction 
 			<p>Claimed P&amp;L: {prediction.claimTransactionHash ? `${prediction.realizedPnl ?? "Unavailable"} ${prediction.collateralSymbol ?? ""}` : "No claim recorded"}</p>
 			{zeroPayout && <p className="text-xs">Settled with zero payout — nothing to claim. Your entry cost is already included in settled P&amp;L. No further payment or transaction is required.</p>}
 			{!payoutKnown && <p className="text-xs">Settlement payout verification is pending or this older record needs accounting recovery. No new claim is offered until its payout is known.</p>}
-			{owner && !prediction.claimTransactionHash && (
+			{owner && !prediction.claimTransactionHash && !autoClaimReady && (
 				<>
 					{payoutKnown && !zeroPayout && (
 						<p className="text-xs">
@@ -94,7 +96,7 @@ export function ClaimPrediction({ prediction }: { prediction: VisiblePrediction 
 					</a>
 				</p>
 			)}
-			{prediction.autoClaimStatus === "VERIFIED" && (
+			{isKeeperHubVerifiedAutoClaim(prediction) && (
 				<div className="space-y-1 text-xs">
 					<p>Auto-claimed by KeeperHub</p>
 					<p>Recovered: {prediction.autoClaimRecovered ?? "verified"} {prediction.collateralSymbol}</p>

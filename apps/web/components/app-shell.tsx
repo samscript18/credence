@@ -1,6 +1,6 @@
 "use client";
 
-import { BarChart3, CircleUserRound, Droplets, ExternalLink, House, Trophy } from "lucide-react";
+import { BarChart3, CircleUserRound, Droplets, ExternalLink, House, Settings, Trophy } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
@@ -14,6 +14,7 @@ const navigation = [
   { href: "/markets", label: "Markets", icon: BarChart3 },
   { href: "/leaderboard", label: "Leaderboard", icon: Trophy },
   { href: "/profile", label: "Profile", icon: CircleUserRound },
+  { href: "/settings", label: "Settings", icon: Settings },
   { href: "/faucet", label: "Faucet", icon: Droplets },
 ];
 
@@ -159,7 +160,7 @@ export function AppShell({ children }: Readonly<{ children: React.ReactNode }>) 
 
       {/* Mobile Bottom Navigation */}
       <div className="fixed inset-x-0 bottom-0 z-30 border-t border-white/5 bg-[#0F1012]/95 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur-md lg:hidden">
-        <nav className="grid grid-cols-5 py-1" aria-label="Mobile navigation">
+        <nav className="grid grid-cols-6 py-1" aria-label="Mobile navigation">
           {navigation.map(({ href, label, icon: Icon }) => {
             const active = href === "/app" ? pathname === href : pathname.startsWith(href);
             return (

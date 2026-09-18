@@ -27,6 +27,12 @@ The deployed Shannon contracts were tested on an isolated Anvil fork at market `
 
 Credence therefore requests the narrower outcome-specific allowance. It also accepts a pre-existing global operator grant when reading legacy owner state, because the deployed module accepts either permission form.
 
+## User preference
+
+Settings → Auto-Claim is a per-user UX default, stored on the Credence user document (`autoClaimPreference`, default off). It is not KeeperHub permission and not the `ENABLE_AUTO_CLAIM` worker flag.
+
+When it is on, a newly confirmed live prediction opens the existing per-prediction Auto-Claim setup (exact ERC-6909 allowance and EIP-712 `RedeemAuthorization`). Wallet approval and signature remain explicit. Rejecting either leaves the prediction created. Turning the preference off does not revoke authorizations already granted on individual predictions, and it does not enroll historical predictions.
+
 ## Local Shannon E2E
 
 A local Credence worker submitted one authorized `redeemFor` through KeeperHub Direct Contract Call on Somnia Shannon. Credence independently verified the receipt and owner payout; the executor received no collateral.

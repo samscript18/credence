@@ -181,7 +181,7 @@ submit a new trade.
   totals, pending claims, and missing-accounting count; optional authentication
   controls locked access.
 - `GET /users/:address/history` — resolved public history.
-- `PATCH /users/profile` — authenticated display name/avatar metadata update.
+- `PATCH /users/profile` — authenticated display name/avatar metadata update, plus the owner's Auto-Claim UX preference (`autoClaimPreference`). That field is returned only on the owner's own profile and does not authorize KeeperHub.
 - `POST /users/profile/avatar` — authenticated `multipart/form-data`, field
   `file`, one file up to 2 MiB; requires Cloudinary server configuration.
 - `GET /leaderboard` — ranked predictor summaries.

@@ -35,6 +35,7 @@ export class UsersService {
       activePredictions: predictions.active,
       resolvedHistory,
       ...settledSummary(resolvedHistory),
+      ...(viewerAddress?.toLowerCase() === walletAddress ? { autoClaimPreference: user.autoClaimPreference === true } : {}),
     };
   }
 
@@ -44,7 +45,7 @@ export class UsersService {
 
   async updateProfile(
     address: string,
-    input: { displayName?: string; avatarUrl?: string; avatarSeed?: string },
+    input: { displayName?: string; avatarUrl?: string; avatarSeed?: string; autoClaimPreference?: boolean },
   ): Promise<PredictorProfile> {
     const walletAddress = address.toLowerCase();
     const update: Record<string, unknown> = {};
@@ -59,6 +60,9 @@ export class UsersService {
     }
     if (input.avatarSeed !== undefined) {
       update.avatarSeed = input.avatarSeed.trim() || undefined;
+    }
+    if (input.autoClaimPreference !== undefined) {
+      update.autoClaimPreference = input.autoClaimPreference === true;
     }
 
     await this.userModel
