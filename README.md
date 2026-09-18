@@ -197,6 +197,30 @@ The integration uses:
 The adapter validates the authenticated sender, current market, pool target,
 economic side, native book direction, and positive filled quantity. 
 
+## Auto-Claim with KeeperHub
+
+Auto-Claim is an optional, per-prediction setup for verified DreamDEX fills.
+The owner explicitly grants a narrow ERC-6909 allowance for that prediction's
+outcome token and signs a market-bound DreamDEX `RedeemAuthorization`.
+Credence stores the authorization encrypted at rest and uses KeeperHub's Direct
+Contract Call API to submit `redeemFor` only after deterministic eligibility
+checks and fresh onchain revalidation pass.
+
+The authorization remains limited to the exact owner, market, outcome, amount,
+nonce, and deadline. DreamDEX pays redemption collateral to the owner, while
+KeeperHub only supplies the executor and gas. A successful submission is
+followed by receipt, calldata, outcome-burn, payout, and executor-nonpayment
+verification before Credence records the claim. Manual DreamDEX claiming stays
+available as a fallback.
+
+Settings → Auto-Claim is off by default. When enabled, it opens the existing
+per-prediction setup after a newly confirmed trade; it never signs, approves,
+or enrolls a prediction silently. Turning the preference off affects only
+future predictions and does not revoke an existing authorization.
+
+See [DreamDEX Auto-Claim](docs/AUTO_CLAIM.md) for the authorization model,
+safety checks, configuration, and verified Shannon E2E evidence.
+
 ## Tech stack
 
 - **Frontend:** Next.js App Router, React, TypeScript, Tailwind CSS,
@@ -276,6 +300,11 @@ the repository-root `.env`, with shell and hosting variables taking priority.
 | `UNLOCK_TOKEN_ADDRESS`    | Payment-token contract                      |
 | `UNLOCK_PRICE_BASE_UNITS` | Unlock price in integer base units          |
 | `UNLOCK_ESCROW_ADDRESS`   | Deployed escrow contract, when enabled      |
+| `ENABLE_AUTO_CLAIM`       | Enables the Auto-Claim worker; default `false` |
+| `KEEPERHUB_API_URL`       | KeeperHub HTTPS URL, or loopback HTTP for local development |
+| `KEEPERHUB_API_KEY`       | KeeperHub organization key for Direct Contract Call |
+| `AUTO_CLAIM_ENCRYPTION_KEY` | 32-byte authorization-encryption key, encoded as 64 hexadecimal characters |
+| `AUTO_CLAIM_AUTH_TTL_SECONDS` | Redeem authorization lifetime, from one hour to 90 days |
 
 Never expose backend secrets with a `NEXT_PUBLIC_` prefix. Unlock payments stay
 paused until the escrow address and matching token and price configuration are
